@@ -34,3 +34,6 @@ That token allows the eVault to know that it deals not just with a certified pla
 For a platform to obtain such a token we suggest an auth endpoint on the evault to either handle the handshake or redirect to 3rd party auth provider it trusts.
 In the handshake the platform provides its ename only. The eVault/auth provider uses the registry to resolve the eName and get the public key of the platform from platform's eVault.
 They run a simple challenge and if the platform passed, it is presented with a token.
+
+Note: just like the eVault can delegate the task to a 3rd party auth provider, the platform/adapter can do the same.
+Note2: whether we do the work inside the platform or delegate, we surely want to consider performance and security tradeoffs. For example: caching of per-eVault tokens vs. requesting them.
