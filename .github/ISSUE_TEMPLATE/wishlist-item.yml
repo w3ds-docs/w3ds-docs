@@ -1,0 +1,107 @@
+name: Wishlist Item
+description: Suggest a feature or improvement you'd like to see in the TRL 7 W3DS Product 
+title: "[Wishlist]: "
+labels: ["wishlist"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your ideas for the W3DS TRL 7 Product, Please fill out the form below so we can understand your wish and turn it into actionable work.
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Type of Issue
+      description: What kind of wishlist item is this?
+      options:
+        - New Feature
+        - Enhancement
+        - Integration
+        - Developer Experience
+        - Documentation
+        - Performance
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      description: Which part of the system does this relate to?
+      multiple: true
+      options:
+        - W3-Adapter
+        - eVault Core
+        - Data Formats
+        - Awareness Protocol
+        - User Auth
+        - Security
+        - Platform Auth
+        - Registry
+        - eVault Protocol
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Description
+      description: A clear, concise description of what you'd like to see.
+      placeholder: "I wish the system could..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the pain point, limitation, or gap this addresses.
+      placeholder: "Currently, users have to... / There is no way to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: If you have ideas on how this could work, describe them here.
+      placeholder: "It could work by..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any workarounds or alternative approaches you've thought about.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How important is this to you?
+      options:
+        - Nice to have
+        - Important
+        - Critical for my use case
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, references, or examples that help explain your wish.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd be willing to help implement this
+          required: false

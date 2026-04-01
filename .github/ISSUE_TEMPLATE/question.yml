@@ -1,0 +1,45 @@
+name: Question
+description: Ask a question about the W3DS ecosystem
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about how something works or should work? Ask away.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Related Area
+      description: Which part of the system is this about?
+      multiple: true
+      options:
+        - W3-Adapter
+        - eVault Core
+        - Data Formats
+        - Awareness Protocol
+        - User Auth
+        - Security
+        - Platform Auth
+        - Registry
+        - eVault Protocol
+        - General
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Any background or context that helps us understand your question.
+    validations:
+      required: false

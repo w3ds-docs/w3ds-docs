@@ -1,0 +1,94 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in the W3DS ecosystem
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug. Please provide as much detail as possible so we can reproduce and fix it.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected Area
+      description: Which part of the system is affected?
+      multiple: true
+      options:
+        - W3-Adapter
+        - eVault Core
+        - Data Formats
+        - Awareness Protocol
+        - User Auth
+        - Security
+        - Platform Auth
+        - Registry
+        - eVault Protocol
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of what the bug is.
+      placeholder: "When I do X, Y happens instead of Z..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to...
+        2. Do...
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Low - Minor inconvenience
+        - Medium - Impacts workflow
+        - High - Blocks usage
+        - Critical - Data loss or security issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Any relevant environment details (OS, browser, version, etc.)
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Logs, screenshots, or anything else that might help.
+    validations:
+      required: false

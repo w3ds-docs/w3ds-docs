@@ -1,0 +1,46 @@
+name: General Issue
+description: Open a general issue that doesn't fit the other categories
+title: "[General]: "
+labels: ["triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for anything that doesn't fit into the other categories.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Related Area
+      description: Which part of the system does this relate to? (if applicable)
+      multiple: true
+      options:
+        - W3-Adapter
+        - eVault Core
+        - Data Formats
+        - Awareness Protocol
+        - User Auth
+        - Security
+        - Platform Auth
+        - Registry
+        - eVault Protocol
+        - Other
+        - Not Applicable
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe your issue, idea, or concern.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other details, links, or screenshots.
+    validations:
+      required: false
