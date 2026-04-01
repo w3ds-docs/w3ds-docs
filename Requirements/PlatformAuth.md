@@ -1,5 +1,7 @@
 # Platofrm/Adapter/Post-Platform Authentication
-⚠️ This document requires refactoring. It mixes requirements and design.
+> ⚠️ This document is not a requirements specification.  
+> It contains a mix of ideas, research topics, and design considerations.  
+> It needs to be decomposed into requirements, architecture, and research artifacts.
 
 ## Problem statement
 We need to align the authentication model and expirience of a post-platform with that of a person.
