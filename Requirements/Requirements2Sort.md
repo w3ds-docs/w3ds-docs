@@ -1,7 +1,8 @@
 # Technical Requirements
 
-This is a set of unsorted requirements.
-TODO: Move them to the appropriate place in this folder.
+> ⚠️ This document is not a requirements specification.  
+> It contains a mix of ideas, research topics, and design considerations.  
+> It needs to be decomposed into requirements, architecture, and research artifacts.
 
 ## Foundational
 * Solidify our definitions of main terminology
