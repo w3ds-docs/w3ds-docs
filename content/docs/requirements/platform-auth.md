@@ -1,4 +1,10 @@
-# Platofrm/Adapter/Post-Platform Authentication
+---
+title: Platform Authentication
+weight: 2
+---
+
+# Platform/Adapter/Post-Platform Authentication
+
 > ⚠️ This document is not a requirements specification.  
 > It contains a mix of ideas, research topics, and design considerations.  
 > It needs to be decomposed into requirements, architecture, and research artifacts.

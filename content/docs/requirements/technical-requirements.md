@@ -1,3 +1,8 @@
+---
+title: Technical Requirements
+weight: 1
+---
+
 # Technical Requirements
 
 > ⚠️ This document is not a requirements specification.  
@@ -33,7 +38,7 @@
     - Consider opt-in vs. opt-out systems
     - Can we support attribute based or fully semantic ACLs?
     - If not, we should define useful categories: e.g., reputation driven authorization, authenticated users, certified platforms
-* Improve platform's authentication with eVaults [details](platauth.md)
+* Improve platform's authentication with eVaults [details]({{< relref "platform-auth" >}})
 * Involve linked data specialists to aid with ontology mapping (for adapters) and alignment in general
 * Explain how two mostly similar ontologies can be reconciled at the schema and eVault level
 * Add basic semantic transformation engine to eVault, allowing to have Big-Bang sweeps of semantic updates, e.g., after merging two popular ontologies.

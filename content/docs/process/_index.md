@@ -1,3 +1,9 @@
+---
+title: Process
+weight: 2
+bookCollapseSection: false
+---
+
 # W3DS Documentation Process
 
 This document describes how we work on documentation in the W3DS TRL7 project.
@@ -6,7 +12,7 @@ The process is intentionally **simple at the start** and will be **improved iter
 
 ---
 
-# Goal
+## Goal
 
 - Produce complete and implementation-ready documentation by June 1
 - Build an effective, scalable documentation process
@@ -14,7 +20,7 @@ The process is intentionally **simple at the start** and will be **improved iter
 
 ---
 
-# Core Principles
+## Core Principles
 
 - Documentation is the primary product at this stage  
 - We follow an **Agile approach** (iterations over perfection)  
@@ -25,7 +31,7 @@ The process is intentionally **simple at the start** and will be **improved iter
 
 ---
 
-# Workflow
+## Workflow
 
 Each piece of work follows this pipeline:
 Idea → Issue → Draft → PR → Review → Merge
@@ -40,7 +46,7 @@ Idea → Issue → Draft → PR → Review → Merge
 
 ---
 
-# AI-assisted workflow
+## AI-assisted workflow
 
 AI  is used at two mandatory stages:
 Input → AI structuring → Draft → AI validation → PR
@@ -52,7 +58,7 @@ AI does not make decisions — only assists.
 
 ---
 
-# Agile Process
+## Agile Process
 
 We work in **weekly sprints**.
 
@@ -67,9 +73,9 @@ We prioritize:
 
 ---
 
-# Sprint Structure
+## Sprint Structure
 
-## Monday — Sprint Start (Kickoff Call)
+### Monday — Sprint Start (Kickoff Call)
 
 Purpose:
 - align on goals  
@@ -84,13 +90,13 @@ Agenda:
 
 ---
 
-## Monday–Thursday — Working Phase
+### Monday–Thursday — Working Phase
 
 Activities:
 - creating Issues  
 - writing drafts  
 - submitting PRs  
-- reviewing others’ work  
+- reviewing others' work  
 
 Communication:
 - async-first (chat + GitHub)  
@@ -104,7 +110,7 @@ Mid-week (Wednesday):
 
 ---
 
-## Friday — Sprint Review Call
+### Friday — Sprint Review Call
 
 Purpose:
 - collect feedback  
@@ -119,7 +125,7 @@ Discussion topics:
 
 ---
 
-## Next Monday — Process Update
+### Next Monday — Process Update
 
 Based on feedback:
 - adjust workflow  
@@ -128,7 +134,7 @@ Based on feedback:
 
 ---
 
-# Definition of Done
+## Definition of Done
 
 A task is complete when:
 
@@ -139,7 +145,7 @@ A task is complete when:
 
 ---
 
-# Communication Rules
+## Communication Rules
 
 - Async-first (chat + GitHub). We use Slack. Join our workgroup: https://join.slack.com/t/w3dstrl7/shared_invite/zt-3u0xtw192-mFt1hRMWGQT2eaPGtWJODw 
 - GitHub = source of truth  
@@ -153,7 +159,7 @@ A task is complete when:
 
 ---
 
-# Roles
+## Roles
 
 - **Writers** — create documentation  
 - **Experts / Clients** — validate correctness  
@@ -162,28 +168,28 @@ A task is complete when:
 
 ---
 
-# Artifacts
+## Artifacts
 
-## GitHub Issues
+### GitHub Issues
 Used for:
 - requirements  
 - ideas  
 - tasks  
 
-## Pull Requests
+### Pull Requests
 Used for:
 - proposing changes  
 - discussion and review  
 
-## Documentation
+### Documentation
 Stored in `/docs`
 
-## Process knowledge
+### Process knowledge
 Stored in `/process`
 
 ---
 
-# Continuous Improvement
+## Continuous Improvement
 
 We actively improve the process.
 
@@ -198,7 +204,7 @@ Stored in:
 
 ---
 
-# Guidelines
+## Guidelines
 
 - Keep texts concise and clear  
 - Avoid ambiguity  
@@ -208,7 +214,7 @@ Stored in:
 
 ---
 
-# Responsibility
+## Responsibility
 
 Each participant is responsible for:
 - contributing to documentation  
