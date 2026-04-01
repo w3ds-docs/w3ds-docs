@@ -1,5 +1,8 @@
 # Technical Requirements
 
+This is a set of unsorted requirements.
+TODO: Move them to the appropriate place in this folder.
+
 ## Foundational
 * Solidify our definitions of main terminology
 * If we keep "groups" as first class citizen and not implementation detail, describe their mechanics
