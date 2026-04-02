@@ -64,7 +64,7 @@ Prepare a complete, consistent and implementation-ready documentation set.
  ---
 
 # Workflow
- See [Process](./process/)
+ See [Process](./process/content/docs/process/_index.md)
 
 ---
 
