@@ -45,21 +45,27 @@ Prepare a complete, consistent and implementation-ready documentation set.
 
 ---
 
-# Documentation Structure (planned)
+# Documentation Structure
 
-/vision
+Root of documentation: `content/docs`
 
-/use-cases
+Contains:
 
-/requirements
+/api - API specifications
 
-/architecture
+/architecture - diagrams, main components, relationships, and interactions
 
-/protocols
+/basics - glossary
 
-/glossary
+/components - detailed documentation of system components and their behavior
+
+/requirements - stakeholders, business, functional, and non-functional requirements
 
 /process - how we work with documents
+
+/use-cases - system scenarios
+
+/vision - problems and principles
 
  ---
 
