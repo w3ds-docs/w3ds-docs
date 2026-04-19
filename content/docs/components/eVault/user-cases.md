@@ -20,19 +20,19 @@ If an eVault is created without a key (e.g., for an organization or a child), a 
 3. A new eVault is created.
 4. The eVault is assigned a unique eID.
 5. The eVault is linked to the provided eName.
-7. The eVault is initialized in a minimal state:
-   7.1 If public key is provided it is stored.
-   7.2 If trusted party is provided it's eName and authority information are stored.
-9. The eVault publishes information about itself to the Registry.
+6. The eVault is initialized in a minimal state:
 
-### Alternative Scenarios
-- A1: Invalid request  
+   6.1 If public key is provided it is stored.
+
+   6.2 If trusted party is provided it's eName and authority information are stored.
+8. The eVault publishes information about itself to the Registry.
+
+### Exceptions
+- E1: Invalid request  
   - If the request is invalid or incomplete, the system rejects it and returns an error.
 
-- A2: eVault already exists  
-  - If an eVault is already associated with the given eName, the system may:
-    - return the existing eVault, or  
-    - reject the request (depending on system rules).
+- E2: eVault already exists  
+  - If an eVault is already associated with the given eName, the system reject the request.
 
 ### Notes
 - It is not yet defined who is authorized to initiate eVault creation.
