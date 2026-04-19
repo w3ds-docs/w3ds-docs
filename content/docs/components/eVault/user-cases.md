@@ -3,6 +3,8 @@
 ### Description
 Creation of a new eVault associated with an provided eName.  
 The eVault is initialized in a minimal state and registered in the system.
+If an entity creates an eVault for itself, a public key is provided immediately to ensure further control over the eVault.
+If an eVault is created without a key (e.g., for an organization or a child), a trusted party is assigned as its controller, and their authority is verified.
 
 ### Actors
 - Request initiator
@@ -18,8 +20,10 @@ The eVault is initialized in a minimal state and registered in the system.
 3. A new eVault is created.
 4. The eVault is assigned a unique eID.
 5. The eVault is linked to the provided eName.
-6. The eVault is initialized in a minimal state (no data, no keys bound).
-7. The eVault publishes information about itself to the Registry.
+7. The eVault is initialized in a minimal state:
+   7.1 If public key is provided it is stored.
+   7.2 If trusted party is provided it's eName and authority information are stored.
+9. The eVault publishes information about itself to the Registry.
 
 ### Alternative Scenarios
 - A1: Invalid request  
