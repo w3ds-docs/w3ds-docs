@@ -75,63 +75,80 @@ We prioritize:
 
 ## Sprint Structure
 
-### Monday — Sprint Start (Kickoff Call)
+### Tuesday — Sprint Sync (Planning + Review)
 
-Purpose:
-- align on goals  
-- explain tasks  
-- answer questions  
+**Purpose:**
+- close previous sprint  
+- align on next sprint  
 
-Agenda:
+**Agenda:**
+
+**1. Previous Sprint Review**
+- what was completed  
+- demos / highlights (if any)  
+- blockers and issues  
+- what did not work  
+
+**2. Process Feedback**
+- suggestions for improvement  
+- decisions on workflow changes  
+
+**3. Next Sprint Planning**
 - sprint goal  
-- workflow reminder  
-- task selection / assignment  
+- priority areas (vision / use-cases / requirements / etc.)  
+- task selection (Issues)  
+- ownership (who does what)  
 - clarifications  
 
 ---
 
-### Monday–Thursday — Working Phase
+### Wednesday–Monday — Working Phase
 
-Activities:
-- creating Issues  
-- writing drafts  
+**Activities:**
+- creating / refining Issues  
+- writing and updating documents  
 - submitting PRs  
-- reviewing others' work  
+- reviewing and merging PRs  
 
-Communication:
-- async-first (chat + GitHub)  
-- use calls only if necessary  
+**Principles:**
+- async-first (GitHub + chat)  
+- small, incremental PRs  
+- visibility of progress in Issues  
 
-Mid-week (Wednesday):
-- async check-in:
-  - what was done  
+---
+
+### Mid-Sprint Check (Optional, Async)
+
+When needed (no fixed day):
+- short updates in chat:
+  - progress  
   - blockers  
-  - questions  
+  - requests for help  
 
 ---
 
-### Friday — Sprint Review Call
+### Continuous Review (Async)
 
-Purpose:
-- collect feedback  
-- understand problems  
-- evaluate process  
-
-Discussion topics:
-- what was completed  
-- what was difficult  
-- what did not work  
-- suggestions for improvement  
+- PRs reviewed continuously (not only at end of sprint)  
+- discussions happen in PRs / Issues  
+- decisions documented in repo  
 
 ---
 
-### Next Monday — Process Update
+### Sprint Output
 
-Based on feedback:
-- adjust workflow  
-- introduce improvements  
-- remove unnecessary steps  
+By next Tuesday:
+- merged PRs  
+- updated documentation sections  
+- open Issues with clear status  
 
+---
+
+### Notes
+
+- Single weekly call = decision point, not working session  
+- Everything else happens asynchronously  
+- Goal - reduce coordination overhead and keep momentum  
 ---
 
 ## Definition of Done
