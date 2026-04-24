@@ -1,10 +1,9 @@
 ---
 title: Process
-weight: 2
-bookCollapseSection: false
+weight: 80
 ---
 
-# W3DS Documentation Process
+# Process
 
 This document describes how we work on documentation in the W3DS TRL7 project.
 

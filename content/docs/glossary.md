@@ -1,6 +1,6 @@
 ---
 title: Glossary
-weight: 1
+weight: 70
 ---
 
 # Glossary
@@ -72,6 +72,16 @@ A secure storage location or server for the management of data and credentials o
 ## Group
 
 An Entity: a reference to a number of users within the MetaState that holds its own W3ID and eVault. It is often seen as a "group" in social networks.
+
+---
+
+## Identity
+
+The continuity of a subject (a person, group, organization, service, or thing) across time and contexts. An identity is what makes a subject recognizable and distinct across different moments and services.
+
+In W3DS, identity is carried by the subject itself, not held by any service. It is realized through a persistent identifier (the W3ID), the cryptographic keys bound to it, and the body of data, credentials, and relationships anchored to that identifier.
+
+An account at a service is not an identity; it is a service-local record that references one.
 
 ---
 
