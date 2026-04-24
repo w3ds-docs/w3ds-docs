@@ -1,6 +1,6 @@
 ---
 title: Principles
-weight: 2
+weight: 30
 ---
 
 # Principles

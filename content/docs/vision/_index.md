@@ -34,34 +34,13 @@ The system should make it possible that:
 - Services do not own user data and cannot lock users in
 - Identity is persistent, portable, and independent of any single identity provider
 - Interactions between users happen through shared data, not through isolated platforms
+- Authority acting on personal data, including actions by delegates, platforms, and groups, is visible to the subject and can be verified
+
+The values these properties serve are named in the [Philosophy](philosophy). The architectural commitments that operationalize them are stated in the [Principles](principles).
 
 ---
 
-## 4. Key Properties
-
-### Data Independence
-
-Data is stored outside of services and remains accessible regardless of the specific application.
-
-### Service Replaceability
-
-Any service can be replaced without loss of data or identity.
-
-### Interoperability by Design
-
-Different services can work with the same data without direct integration between each other.
-
-### Persistent Identity
-
-Each entity has a long-lived identifier that is not tied to any platform.
-
-### Verifiable Interactions
-
-Any action involving another entity, such as one user sending a file to another, can be verified and traced when needed.
-
----
-
-## 5. Scope of the System
+## 4. Scope of the System
 
 The system is not a single application.
 
@@ -81,7 +60,7 @@ It supports use cases such as:
 
 ---
 
-## 6. What This System Is Not
+## 5. What This System Is Not
 
 The system is not:
 
@@ -94,20 +73,18 @@ It does not aim to replace all applications, but to change how they interact wit
 
 ---
 
-## 7. Design Direction
+## 6. Design Direction
 
 The system prioritizes:
 
 - user control over data and identity
 - freedom to choose and switch between services, and competition among them
-- minimizing central points of control
+- central points of control that are explicit, named, and bounded so no operator can trap users or forge ownership
 - clear separation of responsibilities between components
-
-Trade-offs may be made between strict decentralization and practical usability, but central control points must be explicit and justified.
 
 ---
 
-## 8. Success Criteria
+## 7. Success Criteria
 
 The system is considered successful if:
 
