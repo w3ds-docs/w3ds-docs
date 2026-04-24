@@ -9,31 +9,59 @@ These principles define the fundamental commitments and invariants of the system
 
 They are not implementation requirements, but constraints used to evaluate all design and architectural decisions.
 
-These principles apply to all entities in the system, including individuals, groups, organizations and services.
-
 ---
 
 ## 1. Data Sovereignty
 
-Data must remain under the control of the entity to which it is assigned.
+Data belongs to the entity it concerns. Services process it; they do not own it.
 
-- No service should assume ownership of user data
-- Control over data access must remain with the entity
-- Data must not be locked within any single service
+- Custody does not imply ownership
+- No service may operate on data against the entity's wishes
+- Processing data does not transfer ownership
 
 ---
 
-## 2. Service Independence
+## 2. Separation of Data and Services
+
+Data and services are separate concerns. Services operate on data; they do not define it.
+
+- Data must exist independently of the services that produce or consume it
+- Data is not a byproduct of services; it exists in its own right
+- The same user data must be able to serve many services, without the user maintaining separate records for each
+
+---
+
+## 3. Right to Erasure
+
+Users retain the right to remove their data without depending on the cooperation of any service.
+
+- Services must not be able to block or delay erasure
+- Erasure must be final, not merely suspended or hidden
+- Users must decide whether the data's history is erased with it
+
+---
+
+## 4. Portability
+
+Users must be able to move their data between services and implementations without loss of continuity.
+
+- Data must be exportable in a complete, self-contained form
+- Exported data must be re-importable into any conforming service
+- Users must not be locked in by any service or provider, regardless of the reason for leaving
+
+---
+
+## 5. Service Independence
 
 Services must not become gatekeepers of user participation.
 
-- Users must be able to change services without losing continuity
-- No service should create irreversible dependency
-- Multiple services should be able to operate in parallel
+- Users must remain free to choose among conforming providers of the framework
+- Multiple services must be able to operate in parallel on the same data
+- No service may obstruct a user's use of other services
 
 ---
 
-## 3. Persistent Identity
+## 6. Persistent Identity
 
 Identity must exist independently of any particular service.
 
@@ -43,52 +71,73 @@ Identity must exist independently of any particular service.
 
 ---
 
-## 4. Interoperability
+## 7. Interoperability
 
-The ecosystem must function as a coherent whole without tight coupling.
+Interoperability is achieved through shared meaning, not through bilateral agreements between services.
 
-- Services must be able to work with shared information
-- Integration must not require bilateral agreements between services
-- The system must support multiple implementations working together
-
----
-
-## 5. Semantic Consistency
-
-Data must be interpretable across different contexts.
-
-- Meaning of data must be explicit or derivable
-- Differences in interpretation must be resolvable
-- The system must tolerate evolution of data structures over time
+- Shared terms with shared meaning must be enough for services to operate on the same data
+- No service should need to negotiate with another to participate in the ecosystem
+- Multiple conforming implementations of the framework must be able to interoperate
 
 ---
 
-## 6. Verifiability and Accountability
+## 8. Semantic Consistency
 
-Actions within the system must be attributable and verifiable.
+Meaning must travel with the data, not with the service that produced it.
 
-- It must be possible to determine the origin of actions
-- System behavior must be inspectable
-- Historical records must be preserved where required
-
----
-
-## 7. Minimal and Explicit Control Points
-
-Control within the system must be limited and transparent.
-
-- Critical dependencies must be identifiable
-- No hidden control mechanisms should exist
-- Trust assumptions must be explicit
+- Data must carry its meaning, or a reference to where its meaning can be found
+- Data must be interpretable without reference to its originating service
+- Where meanings differ between services, resolution must come from shared ground, not ad hoc negotiation
 
 ---
 
-## 8. User Awareness and Control
+## 9. Data Longevity
+
+Data must remain interpretable over time, independent of the services or technology that produced it.
+
+- Meaning must outlive the services that first carried the data
+- Data must remain usable after the services that produced it are gone
+- Evolution of data structures must not invalidate older data
+
+---
+
+## 10. Verifiability and Accountability
+
+Changes to data must be attributable to the actor that made them.
+
+- It must be possible to determine the origin of data and of changes to it
+- How the system acts on data must be inspectable
+- Historical records must be preserved as long as verifiability depends on them
+
+---
+
+## 11. Minimal and Explicit Control Points
+
+Any point of control in the system must be limited, explicit, and justified.
+
+- No control mechanism may be hidden
+- Trust assumptions and critical dependencies must be identifiable
+- Any control must be no broader than its purpose requires
+- Every control point must have a stated reason
+
+---
+
+## 12. Explicit and Revocable Access
+
+Access to an entity's data must be the result of an explicit grant and must be revocable at any time.
+
+- Every access must be granted, not assumed
+- Every grant must be individually rescindable
+- Delegation must not become a one-way transfer of control
+
+---
+
+## 13. User Awareness and Control
 
 Entities must be able to understand and influence how the system operates on their behalf.
 
-- Entities must be able to see what data exists about them
-- Entities must be able to influence access and usage
-- System behavior must be predictable from the entity’s perspective
+- Entities must be able to see what data exists about them, what it means, where it lives, and who can access it
+- Entities must be able to revisit and change prior decisions about their data
+- Entities must be able to anticipate how the system will act on their data
 
 ---
