@@ -1,3 +1,8 @@
+---
+title: Vision
+weight: 10
+---
+
 # Vision
 
 ## 1. Purpose
@@ -24,84 +29,66 @@ Users, organizations, and other entities maintain their own persistent data and 
 
 The system should make it possible that:
 
-- A user can use multiple services without duplicating data  
-- A user can switch services without losing history, identity, or connections  
-- Services do not own user data and cannot lock users in  
-- Identity is persistent, portable, and independent of any single provider  
-- Interactions between users happen through shared data, not through isolated platforms  
+- A user can use multiple services without duplicating data
+- A user can switch services without losing history, identity, or data
+- Services do not own user data and cannot lock users in
+- Identity is persistent, portable, and independent of any single identity provider
+- Interactions between users happen through shared data, not through isolated platforms
+- Authority acting on personal data, including actions by delegates, platforms, and groups, is visible to the subject and can be verified
+
+The values these properties serve are named in the [Philosophy](philosophy). The architectural commitments that operationalize them are stated in the [Principles](principles).
 
 ---
 
-## 4. Key Properties
-
-### Data Independence
-Data is stored outside of services and remains accessible независимо от конкретного приложения.
-
-### Service Replaceability
-Any service can be replaced without loss of data or identity.
-
-### Interoperability by Design
-Different services can work with the same data without direct integration between each other.
-
-### Persistent Identity
-Each entity has a long-lived identifier that is not tied to any platform.
-
-### Verifiable Interactions
-Actions between entities can be verified and traced when needed.
-
----
-
-## 5. Scope of the System
+## 4. Scope of the System
 
 The system is not a single application.
 
 It is:
 
-- an infrastructure layer  
-- a set of protocols and services  
-- a foundation for building multiple competing applications  
+- an infrastructure layer
+- a set of protocols and services
+- a foundation for building multiple competing applications
 
 It supports use cases such as:
 
-- social interaction  
-- group coordination and governance  
-- document signing  
-- reputation and trust  
-- data sharing between services  
+- social interaction
+- group coordination and governance
+- document signing
+- reputation and trust
+- data sharing between services
 
 ---
 
-## 6. What This System Is Not
+## 5. What This System Is Not
 
 The system is not:
 
-- a single platform or super-app  
-- a centralized database  
-- a closed ecosystem  
-- a fixed set of services  
+- a single platform or super-app
+- a centralized database
+- a closed ecosystem
+- a fixed set of services
 
 It does not aim to replace all applications, but to change how they interact with data and users.
 
 ---
 
-## 7. Design Direction
+## 6. Design Direction
 
 The system prioritizes:
 
-- user control over data and identity  
-- openness and competition between services  
-- minimizing central points of control  
-- clear separation of responsibilities between components  
-
-Trade-offs may be made between strict decentralization and practical usability, but central control points must be explicit and justified.
+- user control over data and identity
+- freedom to choose and switch between services, and competition among them
+- central points of control that are explicit, named, and bounded so no operator can trap users or forge ownership
+- clear separation of responsibilities between components
 
 ---
 
-## 8. Success Criteria
+## 7. Success Criteria
 
 The system is considered successful if:
 
-- users can freely switch between services without data loss  
-- multiple independent services can operate on the same user data  
-- no single service can unilaterally block or control user interactions  
-- identity and data remain usable even if individual services disappear  
+- users can freely switch between services without data loss
+- multiple independent services can operate on the same user data
+- no single service can unilaterally block or control user interactions
+- identity and data remain usable even if individual services disappear
