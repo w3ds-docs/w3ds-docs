@@ -40,6 +40,9 @@ Four things every entity has:
 
 An entity belongs to one eVault. Crossing eVaults happens by reference, not by copy. A user may operate one eVault or several (for role separation, risk segregation, jurisdictional placement, or provider redundancy).
 
+> [!WARNING]
+> **Open question: Subject vs. record identity.** Should `@id` continue to play two roles at once — addressing the eVault's record and identifying the subject the entity is about — or should those roles be separated, or one of them dropped? The choice has consequences for cross-eVault behaviour, the linked-data composition implied by JSON-LD encoding and IRI-grounded properties, what a relation between entities means, and what data shapes are expressible. Discussion: [GitHub issue](https://github.com/w3ds-docs/w3ds-docs/issues/47).
+
 A service may write to the eVault directly, keep its own local copy synchronized with it, or mix the two for different parts of the same application. The canonical entity is always the one in its eVault; a service's local representation is derived.
 
 > [!NOTE]
