@@ -5,7 +5,7 @@ weight: 20
 
 # Type System
 
-Without types, services cannot agree on what data means. This page commits to the fundamentals: what a type is, how types are identified and versioned, how property meaning is semantically grounded.
+Without types, services cannot agree on what data means. In W3DS, multiple services touch the same user data and the data outlives them, so shared meaning is essential for interop and for keeping data interpretable as services evolve. This page commits to the fundamentals: what a type is, how types are identified and versioned and how data meaning is semantically grounded.
 
 ---
 
@@ -16,7 +16,7 @@ Two kinds of types:
 - **Entity types** describe a kind of subject (a blog post, a transaction, a profile). An entity type has a name and declares the set of properties an entity of this kind is expected to carry.
 - **Value types** describe the kind of value a property holds. Three families: **scalars** (string, integer, decimal, boolean, datetime, URI, ...), **references** (a W3ID pointing at another entity, optionally constrained to a target entity type), and **nested objects** (a structured value embedded inline in a parent property, conforming to an entity type's shape but without its own W3ID).
 
-Each property has a name, a value type and a multiplicity (single- or multi-valued). A property may carry value constraints (regex, enumerations, value ranges) that further refine its value type.
+Each property has a name, a value type and a multiplicity (single- or multi-valued). A property may carry value constraints (regex, enumerations, value or cardinality ranges) that further refine its value type.
 
 > [!WARNING]
 > **Open question: Validation strictness.** Whether the eVault enforces declared-only writes (closed-world per referenced type), accepts open-world writes (containing non-declared properties), or supports per-type opt-in. Whether required-ness is enforced at write time, at query time, or both.
@@ -26,7 +26,7 @@ Each property has a name, a value type and a multiplicity (single- or multi-valu
 
 An entity may carry several entity types, accumulated across the services that write to it.
 
-An entity type can extend one or more parent types, inheriting their declared properties. Parents must be entity types defined in imported W3DS models; inheritance graphs stay within W3DS. External vocabularies participate via per-class alignment, not as inheritance targets.
+An entity type can extend one or more parent types, inheriting their declared properties. Parents must be entity types defined in imported W3DS models; inheritance graphs stay within W3DS. External vocabularies participate via alignment, not as inheritance targets.
 
 > [!WARNING]
 > **Open question: Storage and forks under multi-typing.** When two services contribute to the same entity under different types or versions, when do their writes share storage and when do they diverge into parallel streams? Cross-version (same model, different majors) and cross-model (independent declarations of the same IRI) are the two main cases.
@@ -47,7 +47,7 @@ The architecture commits to:
 
 - **W3ID-rooted, version-pinned.** A model is addressed via its W3ID; entity types, properties, and custom value types within the model are addressed via IRIs derived from the model's W3ID (model W3ID plus an anchor). A model's stable identity holds across versions; the version pin names a specific snapshot.
 - **Concrete pins, not ranges.** A pin names exactly one version. Range syntax (`^1.2.0`, wildcards) does not appear. The reasons are reproducibility (a published version must compose the same way every time it is read), longevity (data outlives services and must remain interpretable against the exact version it was written for), and supply-chain safety (a pin cannot drift to an unauthorised snapshot).
-- **Additive evolution by default.** Minor versions add types or properties; existing properties do not change meaning. Breaking changes (removing a property, renaming a property's short label, narrowing a value type) require a new major version.
+- **Additive evolution by default.** Minor versions add types or properties; existing properties do not change meaning. Breaking changes (removing or renaming an element, narrowing a value type) require a new major version.
 - **Verifiable by content and signature.** Each published version is signed by its publisher over a canonical form of the model. Verification is independent of any specific serialization and of who hosts the bytes: any holder whose bytes project to the signed canonical form can verify intactness and authorship. The publisher's continued existence is not required for a type to remain usable; replicas are authentic by their content and signature, not by their hosting location.
 - **Immutable and irrevocable once published.** A published version cannot be mutated and cannot be retracted. Republishing the same version is invalid; withdrawal is invalid. Consumers may resolve a version once and cache or replicate the result indefinitely; subsequent resolutions yield the same canonical form. Errors or improvements are addressed by publishing a new version, not by mutating or withdrawing the existing one.
 - **Old versions stay interpretable indefinitely.** Data outlives services; types outlive their authors. Any reader can ask for the definition of any version that data has been written against, even decades later.
@@ -64,13 +64,13 @@ The architecture commits to:
 
 Every entity type, property, and custom value type has a **W3DS-native identity**: an IRI formed by the model's W3ID plus an anchor naming the element (e.g. `did:w3ds:abc#BlogPost`, `did:w3ds:abc#title`, or `did:w3ds:abc#HashtagString`). These elements do not have their own W3IDs; the model's W3ID is the root from which their IRIs derive. The identity is implicit (derived from the model and the short name) and versionless. Short labels are publisher-defined and fixed for the model version.
 
-An entity type, property, or custom value type can additionally declare alignment to an IRI in a published vocabulary (schema.org, vCard, Activity Streams, etc.) via `class_uri` (for entity types), `slot_uri` (for properties), or `type_uri` (for custom value types).
+An entity type, property, or custom value type can additionally declare alignment to an IRI in a published vocabulary (schema.org, vCard, Activity Streams, etc.) by recording the corresponding external IRI on the element.
 
 > [!WARNING]
-> **Open question: Are alignment changes breaking?** Once an element declares an alignment (via `class_uri`, `slot_uri`, or `type_uri`), is removing or changing that alignment a breaking change requiring a major version?
+> **Open question: Are alignment changes breaking?** Once an element declares an alignment, is removing or changing that alignment a breaking change requiring a major version?
 
 > [!NOTE]
-> **Inheritance and alignment do different work.** Inheritance (`is_a`) connects a W3DS class to its parent inside the W3DS-internal graph; the parent must be a W3DS-defined class. Alignment records that a W3DS-native identity is equivalent (or related) to an IRI in an external vocabulary. A class may carry both at the same time: parents within W3DS, alignments across external vocabularies.
+> **Inheritance and alignment do different work.** Inheritance connects a W3DS entity type to its parent inside the W3DS-internal graph; the parent must be a W3DS-defined entity type. Alignment records that a W3DS-native identity is equivalent (or related) to an IRI in an external vocabulary. An entity type may carry both at the same time: parents within W3DS, alignments across external vocabularies.
 
 Anyone may publish a model. The architecture does not classify models into structural tiers; nothing in the architecture enforces them. However, in practice three patterns of reuse breadth tend to emerge:
 
@@ -85,6 +85,9 @@ The expected practice is to match the broadest reasonable scope: ground shared c
 
 > [!NOTE]
 > JSON-LD is a natural wire format for the data: `@context` resolves the short names used in the data to IRIs (typically the external alignment IRI when one is declared, e.g. `BlogPost` to `https://schema.org/BlogPosting`; the W3DS-native IRI otherwise). Other serializations (plain JSON with a separate context, RDF Turtle, Protobuf) are equally valid; the architecture commits to the logical model, not to any particular encoding.
+
+> [!NOTE]
+> RDFS/OWL inference rules are not part of the architecture, but consumers can apply their own reasoning over the IRIs (W3DS-native or aligned) if their use case calls for it.
 
 ---
 
