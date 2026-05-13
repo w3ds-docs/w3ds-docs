@@ -103,6 +103,12 @@ The name of the current social-oriented project that uses the Web 3.0 Data Space
 
 ---
 
+## MetaState Foundation
+
+А non-profit organization that implements the MetaState Project.
+
+---
+
 ## MetaState Prototype
 
 The current project to deliver the Prototype of the MetaState at TRL6, with the minimum required features and developments to produce the required functionality.
@@ -130,6 +136,12 @@ Signed documents by the Root CA in the system that state that an eName belongs t
 ## Post-Platform (and/or Service)
 
 A service or platform that can operate with eVaults in the W3DS (dataless) mode. Post-platforms sync data with eVaults via the Web3 Adapter and Awareness Protocol.
+
+---
+
+## Post-Platforms Foundation
+
+A non-profit organization focused on developing the infrastructure layer of W3DS.
 
 ---
 
@@ -211,6 +223,12 @@ A standardized data model format for credentials that can be cryptographically s
 
 ---
 
+## W3DS Alliance B.V.
+
+A commercial company that helps adapt IT solutions for use within the W3DS infrastructure. It's goal is to co-develop open protocols, reference implementations, and deployment frameworks.
+
+---
+
 ## Web 3.0 Identifier (W3ID / eName)
 
 A globally or locally unique, persistent identifier for people, eVaults, Groups, Post-Platforms, docs, or triples. It enables verifiable, persistent, and decentralized digital identity.
@@ -225,7 +243,7 @@ Software that runs next to a Post-Platform and is responsible for syncing the pl
 
 ---
 
-## Web 3 Protocol
+## Web3 Protocol
 
 The query language that a Web3 Adapter (or a Post-Platform without a Web3 Adapter) uses to talk to an eVault. In the prototype, this is implemented as the eVault GraphQL API.
 
