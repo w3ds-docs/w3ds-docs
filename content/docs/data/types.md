@@ -22,7 +22,7 @@ A range is one of three families:
 
 - **Scalar types**: atomic typed values. The architecture provides built-in scalar types (string, integer, decimal, boolean, datetime, URI, ...); publishers may define custom scalar types that refine a built-in scalar type with a pattern, lexical format, or encoded structure. Examples: a `HashtagString` (regex-constrained string), a `WKTPoint` (point geometry encoded as a WKT-formatted string), an `ISBN`.
 - **Compound value types**: publisher-defined structures with named properties and no identity. Two values with the same property values are equal. Examples: `Money` (amount and currency), `Coordinate` (latitude and longitude) or an `Address` value.
-- **Entity types**: when an entity type appears as a range, the property is a **reference**; its value is the target entity's W3ID, and the target is expected to carry the named type.
+- **Entity types**: when an entity type appears as a range, the property is a **reference**; its value is the target subject's W3ID, and the target is expected to carry the named type.
 
 | Family               | Form     | Identity |
 | -------------------- | -------- | -------- |
@@ -35,15 +35,15 @@ All property names in a write must be declared, otherwise the write is rejected 
 > [!WARNING]
 > **Open question: Ordering on multi-valued properties.** A multi-valued property may be unordered (a set) or ordered (a list); the two have different storage and convergence semantics. Where does ordering sit in the type definition, and does it carry the same weight as value type and multiplicity?
 
-An entity may carry several entity types in its **type set**, accumulated across the services that write to it.
+An entity may carry several entity types in its **type set**, accumulated across the records that describe it.
 
 An entity type can extend one or more parent types, inheriting their declared properties. Parents must be entity types defined in imported W3DS models; inheritance graphs stay within W3DS. External vocabularies participate via alignment, not as inheritance targets.
 
 > [!WARNING]
-> **Open question: Storage and forks under multi-typing.** When two services contribute to the same entity under different types or versions, when do their writes share storage and when do they diverge into parallel streams? Cross-version (same model, different majors) and cross-model (independent declarations of the same IRI) are the two main cases.
+> **Open question: Conflicting types and model evolution across records.** Records about the same subject may use different (or semantically conflicting) types and different major versions of the same type. The architecture surfaces all records with attribution but does not pick a winner. Specific unresolved cases include semantic conflicts between co-present types, cross-major drift of the same model (where properties may have been renamed or regrounded between majors), and single-valued property values asserted by different records. Whether to commit to default resolution rules, and where those rules belong (reads, concurrency, types), is deferred.
 
 > [!WARNING]
-> **Open question: Read modes.** What a default read returns when an entity carries multiple types or forked storage. Whether the architecture commits to one read mode or several (e.g. type-bound or global), and which is the default.
+> **Open question: Default read projection.** Reads project through reader-chosen types (one type, a subset, or the union across all). What the architecture returns when a reader specifies no type, and how reads handle multi-major forks of the same model, is deferred to a future reads page.
 
 > [!WARNING]
 > **Open question: Does extension induce implicit type-set membership?** When an entity is typed `BlogPost` and `BlogPost` extends `Article`, does the entity's effective type set include both `BlogPost` and `Article`, or only `BlogPost` until `Article` is added explicitly?
@@ -93,7 +93,7 @@ Anyone may publish a model. The architecture does not classify models into struc
 - **Domain-level**: maintained for cross-platform reuse within a domain (social, health, edu, ...).
 - **Platform-level**: maintained by a single platform for its own models, not reused.
 
-The expected practice is to match the broadest reasonable scope: ground shared concepts in existing foundational or domain models rather than re-minting them at a narrower scope. When a narrow-scope type gains broader adoption, the equivalence is recorded as an alignment with a broader-scope type. Existing entities keep their original type; the alignment carries the cross-model mapping.
+The expected practice is to match the broadest reasonable scope: ground shared concepts in existing foundational or domain models rather than re-minting them at a narrower scope. When a narrow-scope type gains broader adoption, the equivalence is recorded as an alignment with a broader-scope type. Existing records keep their original type; the alignment carries the cross-model mapping.
 
 > [!WARNING]
 > **Open question: Alignment publishing and opt-in.** Who publishes alignments and how consumers opt in at read time. Cases include: cross-model (`schema:name` ≡ `foaf:name`, or a narrow-scope W3DS model aligning with a broader-scope one), cross-type (two entity types with overlapping properties), and cross-major (a property renamed or regrounded in a new major).

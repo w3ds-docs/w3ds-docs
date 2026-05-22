@@ -12,8 +12,8 @@ The data architecture specifies how user-owned data is shaped, accessed, evolved
 ## 1. At a glance
 
 - User data lives in the user's eVault, never centralized; services contribute and read without a central authority.
-- The unit of data is the **entity**: one subject, one stable W3ID, one or more types, named properties, recoverable history.
-- The unit of change is the **property write**: atomic across everything it names, per-property access, optional state-gating.
+- An **entity** is the logical representation of a subject: a stable W3ID, one or more types, named properties, and recoverable history. Its data lives in one or more **records**, each in some eVault.
+- A **write** changes one or more properties of a single record: atomic across the properties it names, per-property access, optional state-gating.
 - Types are W3ID-pinned shapes; an entity can carry multiple types and accumulate them as services join.
 - Old writes stay valid against their original type; data outlives services.
 
@@ -44,9 +44,11 @@ Out of scope:
 
 Chapter-scoped quick reference.
 
-- **entity**. The unit of data: a single subject with a stable W3ID, a type set, named properties and history.
-- **property**. A named slot on an entity holding one or more values. The unit of change is a property write.
-- **type set**. The set of entity types an entity carries; accumulated across writes and unordered.
+- **subject**. The thing being described (a person, post, transaction, concept). Identified by a stable W3ID.
+- **entity**. The logical representation of a subject: identifier, type set, named properties, history.
+- **record**. A stored unit of an entity in an eVault. An entity's data may be split across multiple records, including multiple records in the same eVault when different services or models contribute. Identified by a W3ID.
+- **property**. A named slot on an entity holding one or more values; property values are stored within records and change through writes.
+- **type set**. The set of entity types the records declare the subject to be. The effective type set is the union across records.
 - **model**. The unit of publication: a coherent bundling of entity types, properties, and value types.
 
 ---
