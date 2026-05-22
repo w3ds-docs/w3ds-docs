@@ -92,8 +92,6 @@ The four types come from four different models: the manufacturer uses an auto-in
 
 Property names can collide across models. Here, both the manufacturer's `auto:Vehicle` and the owner's `personal:Asset` declare a property labelled `name`, but they live in different models, so the labels resolve to different IRIs: the manufacturer's is `auto:name` (the product name, `"Volkswagen Golf"`); the owner's is `personal:name` (a pet name, `"Goldie"`). The CURIE prefix identifies the model the property belongs to, so the two `name`s are distinct properties at the underlying IRI level. A reader projecting through a single type sees one `name`; a multi-type merge exposes both, disambiguated by their prefix. The record identity section below shows the merged-view wire form with both names surfaced.
 
-User identity is separate from subject identity: Alice owns one of the eVaults above and appears as the `registeredOwner` value in the government's record, but she is not the subject; the car is. The manufacturer, the service center, and the government registry are also sovereign principals with their own eVaults, and none of them is the subject. An eVault holder may also be the subject of records, but that is a separate (and optional) case.
-
 Alternative modelling: the owner's and service center's contributions could instead be separate entities (an `Ownership` entity referencing the car, a `ServiceRecord` entity referencing it). Parallel records and separate entities are both architecturally supported.
 
 A user may operate one eVault or several (for role separation, risk segregation, jurisdictional placement, or provider redundancy). Each of the user's eVaults may hold one or more records about a subject; the subject's identity is the same across them.
