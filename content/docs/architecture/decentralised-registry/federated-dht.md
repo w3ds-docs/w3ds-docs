@@ -3,32 +3,29 @@ title: "Solution 1: Federated DHT"
 weight: 1
 ---
 
-# Solution 1: Federated registry nodes over a DHT
+# Solution 1: Federated DHT
 
 This page describes the first candidate design and walks through worked
-examples. For the shared eName record and design goals, see the
-[Overview](../).
+examples. For the shared eName record, the conflict rules, and the transfer and
+audit model, see the [Overview](../).
 
 ## Summary
 
-A set of independently operated Registry nodes each run the same public API.
-eName records are stored in a
-[distributed hash table](https://en.wikipedia.org/wiki/Distributed_hash_table)
-(DHT) keyed by the W3ID, so any node can resolve any eName regardless of which
-node first received the write. Writes are self-signed by the eName owner and
-spread between nodes by a [gossip protocol](https://en.wikipedia.org/wiki/Gossip_protocol).
-Key binding certificates are issued by a threshold-signing quorum so that no
-single node can forge a certificate.
+A set of independently operated peer registries each hold a near-complete copy
+of all eName records. When one registry accepts a change, it spreads to the
+others by a [gossip protocol](https://en.wikipedia.org/wiki/Gossip_protocol):
+each registry periodically compares notes with a few peers and pulls anything
+it is missing. There is no central root. Any registry can answer any lookup.
 
 > **In plain terms**
 >
-> The records are spread across many servers run by different organisations. No
-> single server holds all of them. Each server holds a share, and they all
-> follow the same rule for deciding which server is responsible for which
-> records, so any server can still answer any lookup. A distributed hash table
-> is that rule, implemented in software. If some servers go offline, the
-> remaining ones still hold the data. No single organisation controls the whole
-> set, so none of them can shut it down or alter it unnoticed.
+> Every registry keeps its own full copy of the records. When something
+> changes, the registry that received the change tells a few other registries,
+> they tell a few more, and within seconds the change has spread to all of
+> them. This is the same way news spreads through a group by word of mouth. If
+> some registries are offline or slow, the rest still have the data, and the
+> stragglers catch up automatically the next time they compare copies. Nobody
+> owns the master copy, because there is no master copy.
 
 ## Topology
 
@@ -40,141 +37,108 @@ graph TB
         Wallet[eID Wallet]
     end
 
-    subgraph Federation["Federated Registry nodes"]
-        N1[Node A]
-        N2[Node B]
-        N3[Node C]
-        N4[Node D]
-        DHT{{Kademlia DHT keyed by W3ID}}
-        N1 --- DHT
-        N2 --- DHT
-        N3 --- DHT
-        N4 --- DHT
-        N1 -. gossip .- N2
-        N2 -. gossip .- N3
-        N3 -. gossip .- N4
-        N4 -. gossip .- N1
+    subgraph Federation["Peer registries (each holds a full copy)"]
+        R1[Registry A]
+        R2[Registry B]
+        R3[Registry C]
+        R4[Registry D]
+        R1 -. gossip + anti-entropy .- R2
+        R2 -. gossip .- R3
+        R3 -. gossip .- R4
+        R4 -. gossip .- R1
+        R1 -. gossip .- R3
     end
 
-    subgraph Quorum["Threshold signing quorum (t-of-n)"]
-        S1[Signer share 1]
-        S2[Signer share 2]
-        S3[Signer share 3]
-        Group[Group public key in JWKS]
-        S1 --> Group
-        S2 --> Group
-        S3 --> Group
-    end
-
-    EVault -->|resolve / list| N1
-    Platform -->|resolve / list| N2
-    Wallet -->|register / update record| N3
-    Wallet -->|request key binding cert| N4
-    N4 --> Quorum
-    Quorum -->|key binding JWT| Wallet
+    Wallet -->|register / update / transfer| R1
+    EVault -->|resolve eName| R2
+    Platform -->|resolve eName| R3
 ```
 
-## Node membership and bootstrapping
+## How records spread
 
-The specific rule used here is [Kademlia](https://en.wikipedia.org/wiki/Kademlia),
-a well-tested design. What matters in plain terms is that it lets any server
-find the few other servers responsible for a given record in a small number of
-steps, and no one has to keep a central master list of who holds what.
+- Each registry stores the full set of eName records locally, so it can resolve
+  any eName without contacting a peer.
+- After accepting a write, a registry **gossips** the new record to a few
+  random peers, who pass it on. Within a few rounds every registry has it.
+- In the background, registries run **anti-entropy**: each pair exchanges a
+  compact [Merkle-tree](https://en.wikipedia.org/wiki/Merkle_tree) summary of
+  what it holds and pulls anything missing or out of date. This is the
+  self-healing path that covers a registry that was offline during a gossip
+  round.
+- A registry that needs to scale beyond a single machine may shard its local
+  copy internally, optionally with a
+  [distributed hash table](https://en.wikipedia.org/wiki/Distributed_hash_table).
+  That is an implementation detail inside one registry and does not change the
+  federation model.
 
-- A new server joins by contacting one or more existing **seed nodes** whose
-  addresses are published in [Links](/docs/W3DS%20Basics/Links). It discovers
-  the rest of the network by asking those seeds, and asking the servers they
-  point to, until it has built up its own view of the network.
-- Membership is **permissioned at the federation layer**. Each operator holds
-  an operator key, and the current operator set is itself a well-known record
-  in the DHT, signed by a t-of-n quorum of existing operators. Admitting a new
-  operator is a quorum action. This gives resistance to a
-  [Sybil attack](https://en.wikipedia.org/wiki/Sybil_attack), where one party
-  creates many fake identities to outvote everyone else: fake nodes can store
-  data but cannot vote, because voting requires an admitted operator key.
-- Read-only mirror nodes may join without admission. They serve resolutions but
-  cannot vote in the signing quorum or admit operators.
-
-## Data placement and replication
-
-The plain-terms goal here is "never keep only one copy of anything".
-
-- The DHT key for an eName is `SHA-256(ename)`, a
-  [hash](https://en.wikipedia.org/wiki/Cryptographic_hash_function) that turns
-  the name into a fixed fingerprint used to decide which nodes are responsible
-  for it. The record is stored on the `k` closest nodes to that fingerprint,
-  where `k` is the replication factor, for example 8. So every entry lives on
-  about eight independent machines, not one.
-- On write, the receiving node copies the record to all `k` of those nodes.
-- Records are also kept in sync by **anti-entropy gossip**: nodes regularly
-  compare compact summaries of what they hold, built with a
-  [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree), and pull anything
-  they are missing or that is out of date. This is the self-healing mechanism:
-  if a node was offline during a write, it catches up automatically the next
-  time it compares notes with a neighbour.
-
-## Write path: register, update, migrate
+## Write path
 
 ```mermaid
 sequenceDiagram
     participant Wallet as eID Wallet
-    participant Node as Registry Node
-    participant DHT as k closest nodes
-    Wallet->>Wallet: 1. Build eName record (version n+1)
-    Wallet->>Wallet: 2. Sign record with current key -> proof
-    Wallet->>Node: 3. PUT /records/@ename
-    Node->>DHT: 4. FIND_NODE for SHA-256(ename)
-    Node->>DHT: 5. Fetch current record (version n)
-    Node->>Node: 6. Check version == n+1
-    Node->>Node: 7. Verify proof against version n publicKey
-    alt Valid
-        Node->>DHT: 8. STORE record on k closest nodes
-        Node-->>Wallet: 9. 200 OK with stored version
-    else Invalid
-        Node-->>Wallet: 9. 409 Conflict or 400 Bad Request
+    participant R as Receiving registry
+    participant Peers as Peer registries
+    Wallet->>Wallet: 1. Build eName record, sign -> proof
+    Wallet->>R: 2. PUT /records/@ename
+    R->>R: 3. Verify proof and version chain
+    R->>R: 4. Duplicate / conflict check (local + peers)
+    alt No conflict
+        R->>R: 5. Store record, append audit log entry
+        R->>Peers: 6. Gossip the new record
+        R-->>Wallet: 7. 200 OK
+    else Conflict found
+        R->>R: 5. Mark conflict_pending_review, audit it
+        R-->>Wallet: 7. 409 Conflict with conflict metadata
     end
 ```
 
 ## Example A: registering a new eName
 
-A new user provisions in the eID Wallet. The wallet builds a `version` 1 record
-and submits it to any node.
+A new user provisions in the eID Wallet. The wallet first collects timestamp
+attestations from several witnesses, then submits the creation record.
 
 ```http
 PUT /records/@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a HTTP/1.1
-Host: node-a.registry.w3ds.example
+Host: registry-a.w3ds.example
 Content-Type: application/json
 
 {
   "ename": "@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a",
-  "version": 1,
+  "class": "global",
+  "controller": "@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a",
+  "evault": "@b1c2d3e4-7f80-4a11-9c22-d3e4f5061728",
   "uri": "https://evault.example.com/users/user-a",
-  "evault": "evault-001",
-  "alsoKnownAs": [],
-  "keyBinding": {
-    "publicKey": "zDnaerx9Cp5X2chPZ8n3wK7mN9pQrS7tUvW1...",
-    "alg": "ES256",
-    "rotatedAt": 1737730800
+  "version": 1,
+  "creationRecord": {
+    "creationTimestamp": 1737730800,
+    "genesisKey": "zGenesisPublicKey...",
+    "timestampProof": {
+      "policy": "7-of-10",
+      "witnesses": [
+        { "witness": "witness-01", "attestedAt": 1737730805, "signature": "z..." },
+        { "witness": "witness-04", "attestedAt": 1737730802, "signature": "z..." }
+      ]
+    },
+    "proof": { "type": "ecdsa-2019", "signature": "zGenesisSelfSignature..." }
   },
+  "transferChain": [],
+  "controlKey": "zGenesisPublicKey...",
+  "conflictStatus": "none",
   "updatedAt": 1737730800,
-  "proof": {
-    "type": "ecdsa-2019",
-    "created": 1737730800,
-    "verificationMethod": "@e4d909c2-...#key-1",
-    "signature": "z3FXQj..."
-  }
+  "proof": { "type": "ecdsa-2019", "signature": "z3FXQj..." }
 }
 ```
 
-The node confirms the eName is syntactically valid and unused, verifies `proof`
-against the genesis key declared in `keyBinding`, then issues a `STORE` to the
-`k` closest nodes.
+The registry verifies the genesis self-signature and the witness quorum, runs a
+best-effort duplicate check against its own records and reachable peers
+(`FR11`, `FR12`), stores the record, appends a creation entry to its audit log,
+and gossips it.
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json
 
-{ "ename": "@e4d909c2-...", "version": 1, "storedReplicas": 8 }
+{ "ename": "@e4d909c2-...", "version": 1, "conflictStatus": "none" }
 ```
 
 ## Example B: resolving an eName
@@ -182,23 +146,20 @@ Content-Type: application/json
 ```mermaid
 sequenceDiagram
     participant Client as Client
-    participant Node as Registry Node
-    participant DHT as DHT peers
-    Client->>Node: 1. GET /resolve?w3id=@ename
-    Node->>Node: 2. Check local cache
-    alt Cache miss
-        Node->>DHT: 3. iterative FIND_VALUE for SHA-256(ename)
-        DHT-->>Node: 4. Up to k record replicas
-        Node->>Node: 5. Pick highest version, verify proof
+    participant R as Registry
+    Client->>R: 1. GET /resolve?w3id=@ename
+    R->>R: 2. Look up local copy
+    R->>R: 3. Check conflictStatus
+    alt conflictStatus is none
+        R-->>Client: 4. Current target
+    else conflict present
+        R-->>Client: 4. Target plus conflict metadata
     end
-    Node-->>Client: 6. Resolved record
 ```
-
-A platform resolves a user before verifying a signature:
 
 ```http
 GET /resolve?w3id=@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a HTTP/1.1
-Host: node-b.registry.w3ds.example
+Host: registry-b.w3ds.example
 ```
 
 ```http
@@ -208,22 +169,21 @@ Content-Type: application/json
 {
   "ename": "@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a",
   "uri": "https://evault.example.com/users/user-a",
-  "evault": "evault-001",
-  "originalUri": "https://evault.example.com/users/user-a",
+  "evault": "@b1c2d3e4-7f80-4a11-9c22-d3e4f5061728",
+  "conflictStatus": "none",
   "resolved": true
 }
 ```
 
-The node returns the highest `version` found among the `k` replicas and
-verifies its `proof` before responding. If replicas disagree on `version`, the
-highest valid one wins and the node issues a background `STORE` to repair the
-stale replicas, which is read repair.
+Resolution always returns the current accepted target (`FR7`). If the entry is
+in conflict, the response also carries the conflict metadata (`FR8`), and a
+registry serving a cached answer keeps that conflict status attached (`FR10`).
 
 ## Example C: key rotation after a lost device
 
-The user lost a phone and rotates keys from a recovery device. The wallet reads
-the current record (`version` 1), builds `version` 2 with the new public key,
-and signs `proof` with the **old** key.
+The user lost a phone and rotates the control key from a recovery device. The
+wallet reads `version` 1, builds `version` 2 with the new `controlKey`, and
+signs `proof` with the **old** key.
 
 ```http
 PUT /records/@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a HTTP/1.1
@@ -232,120 +192,127 @@ Content-Type: application/json
 {
   "ename": "@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a",
   "version": 2,
-  "uri": "https://evault.example.com/users/user-a",
-  "evault": "evault-001",
-  "alsoKnownAs": [],
-  "keyBinding": {
-    "publicKey": "zNEWkeyMaterialForTheRecoveredDevice...",
-    "alg": "ES256",
-    "rotatedAt": 1737900000
-  },
+  "controlKey": "zNewControlKeyOnRecoveryDevice...",
   "updatedAt": 1737900000,
   "proof": {
     "type": "ecdsa-2019",
-    "verificationMethod": "@e4d909c2-...#key-1",
-    "signature": "z9rotationSignedByOldKey..."
-  }
+    "verificationMethod": "@e4d909c2-...#control-key-1",
+    "signature": "zSignedByOldControlKey..."
+  },
+  "...": "creationRecord and other fields unchanged"
 }
 ```
 
-The node verifies `version` is `n+1` and that `proof` validates against the
-`version` 1 public key, then stores it. A node that receives a forged
-`version` 2 signed by an attacker key fails step 7 and returns `409`.
+The registry checks that `version` is one greater and that `proof` verifies
+against the `version` 1 control key, stores it, audits the rotation, and
+gossips it. The eName itself is unchanged, satisfying the requirement that a
+W3ID survives key rotation (W3ID Section 5).
 
-## Example D: migrating to a new eVault
+## Example D: transferring to a new eVault
 
-Migration is an ordinary `version` bump that changes `uri` and `evault` and
-appends the old eVault identifier to `alsoKnownAs`. Resolvers that still hold
-the old eVault identifier follow `alsoKnownAs` to the new endpoint.
+Migration is **not** a plain target overwrite. The wallet appends a signed
+transfer record to `transferChain` (`FR26`, `FR27`).
 
-```json
+```http
+PUT /records/@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a HTTP/1.1
+Content-Type: application/json
+
 {
   "ename": "@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a",
   "version": 3,
+  "evault": "@f9a8b7c6-1234-4def-8a9b-0c1d2e3f4051",
   "uri": "https://evault-cloud.example.org/u/user-a",
-  "evault": "evault-042",
-  "alsoKnownAs": ["evault-001"],
-  "...": "proof signed by version 2 key"
+  "transferChain": [
+    {
+      "previousTarget": "@b1c2d3e4-7f80-4a11-9c22-d3e4f5061728",
+      "newTarget": "@f9a8b7c6-1234-4def-8a9b-0c1d2e3f4051",
+      "effectiveTime": 1738500000,
+      "creationReference": "hash-of-creation-record",
+      "documentHash": "hash-of-transfer-document",
+      "authorizationEvidence": ["zSignedByController..."],
+      "signatures": ["zSignedByPreviousController..."]
+    }
+  ],
+  "...": "proof signed by version 2 control key"
 }
 ```
 
-## Example E: issuing a key binding certificate
+A registry accepts the new target only because the transfer chain links it back
+to the preserved creation record (`FR29`, `FR31`). The genesis record is never
+overwritten (`FR30`), and the transfer is written to the audit log.
 
-> **In plain terms**
->
-> A key binding certificate is a signed statement that a particular key belongs
-> to a particular identity. In the current system one organisation signs every
-> such statement, which means that one organisation could also forge one. Here
-> the signing key is divided into shares held by several operators, a technique
-> called [threshold cryptography](https://en.wikipedia.org/wiki/Threshold_cryptosystem).
-> No operator holds the whole key. A statement is only valid once enough of
-> them, for example three out of five, have each applied their share. The
-> result is a single signature that anyone can check, but producing a fake one
-> now requires compromising several independent operators at the same time
-> rather than just one.
+## Example E: a conflict and how it is resolved
 
-Key binding stays a [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token) so
-existing verifiers in [Signing](/docs/W3DS%20Protocol/Signing) keep working,
-but the signing key is split:
+Two registries are briefly partitioned and each accepts a different genesis
+record for the same eName.
 
-- The federation runs a **t-of-n threshold signing scheme** such as FROST over
-  P-256. Each operator holds one key share. No node ever holds the full private
-  key.
-- To issue a certificate, a node collects partial signatures from at least `t`
-  operators over the payload (`ename`, `publicKey`, `iat`, `exp`). The combined
-  signature verifies against a single **group public key**.
-- `GET /.well-known/jwks.json` publishes that group public key. Verifiers do
-  not know the signature came from a quorum.
-
-```http
-POST /key-binding HTTP/1.1
-Content-Type: application/json
-
-{ "ename": "@e4d909c2-...", "publicKey": "zDnaerx9Cp5X2chPZ8n3..." }
+```mermaid
+sequenceDiagram
+    participant RA as Registry A
+    participant RB as Registry B
+    RA->>RA: Accepts @ename, creationTimestamp T1
+    RB->>RB: Accepts @ename, creationTimestamp T2
+    Note over RA,RB: Partition heals, anti-entropy runs
+    RA->>RB: Exchange records for @ename
+    RA->>RA: Detect two targets, no transfer chain
+    RA->>RA: Mark conflict_pending_review, audit it
+    RB->>RB: Same: mark and audit
+    RA->>RA: Compare witnessed timestamps: T1 < T2
+    RA->>RA: T1 wins, status resolved, audit it
 ```
+
+Neither registry silently overwrites the other's record (`FR9`). Both mark the
+entry `conflict_pending_review` and expose that status (`FR21`, `FR22`,
+`FR25`). The deterministic rule then applies: the record with the oldest valid
+witnessed creation timestamp wins (`FR24`, `NFR7`). If the two timestamps were
+too close to separate, the entry would stay `conflict_pending_review` for human
+or policy review. Until a winner is chosen, resolution still returns an answer
+but always with the conflict metadata attached.
 
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json
 
-{ "certificate": "eyJhbGciOiJFUzI1NiIsImtpZCI6Imdyb3VwIn0..." }
+{
+  "ename": "@e4d909c2-...",
+  "uri": "https://evault.example.com/users/user-a",
+  "conflictStatus": "conflict_pending_review",
+  "conflict": {
+    "candidates": 2,
+    "policy": "oldest-valid-creation-timestamp"
+  }
+}
 ```
-
-Before contributing a partial signature, each operator independently re-checks
-that `publicKey` matches the current eName record in the DHT. A single
-dishonest operator cannot get a forged binding signed because it cannot reach
-the threshold `t` alone.
 
 ## Security model and failure modes
 
-- **Forgery**: prevented by record self-signatures and threshold signing.
-  Compromising fewer than `t` operators yields nothing.
-- **Withholding**: a node can refuse to serve, but clients retry other nodes,
-  and `k`-way replication plus anti-entropy means the record still exists
-  elsewhere. Total withholding needs control of all `k` closest nodes.
-- **Sybil**: mitigated by permissioned operator admission; mirror nodes cannot
-  vote or sign.
-- **Stale reads**: possible during network splits because the system is
-  [eventually consistent](https://en.wikipedia.org/wiki/Eventual_consistency),
-  meaning a just-made change can take a short while to reach every node. The
-  `version` counter bounds the damage: a client can reject an older record if
-  it has already seen a newer one.
-- **Quorum downtime**: if fewer than `t` operators are online, resolution still
-  works but new key binding certificates cannot be issued until quorum returns.
-- **Eclipse attack**: an attacker controlling a victim routing table can hide
-  records. Mitigations: diverse seed nodes, ID-based bucket constraints, and
-  signed operator-set records.
+- **Forgery**: prevented by the self-signed record and update chain. A registry
+  cannot alter a record without breaking a signature.
+- **Withholding**: a registry can refuse to serve, but every other registry
+  holds a full copy, so a client simply asks another. Total withholding would
+  need every registry to collude.
+- **Sybil**: a [Sybil attack](https://en.wikipedia.org/wiki/Sybil_attack) tries
+  to flood the federation with fake registries. It is blunted by source
+  reputation: a fake or unknown registry has too little reputation to override
+  established records (`NFR11`, `NFR16`, `NFR17`).
+- **Stale reads**: possible during a network split because the system is
+  [eventually consistent](https://en.wikipedia.org/wiki/Eventual_consistency).
+  The `version` counter and creation timestamps bound the damage, and conflicts
+  surface once the split heals.
+- **Forged creation race**: an attacker registers a duplicate eName. Because
+  peers already hold the older, properly witnessed record, the duplicate loses
+  on timestamp once the records meet (`NFR16`).
 
 ## Strengths and trade-offs
 
-Strengths: low resolution latency, no global blockchain, free join and leave
-for mirror nodes, and certificate signing survives loss of up to `n - t`
-operators.
+Strengths: very low resolution latency because every registry answers locally,
+a simple client model (a plain HTTP resolve), and a close fit to the federated
+peer model the requirements prescribe with no extra machinery.
 
-Trade-offs: resolution is eventually consistent so a fresh write may take time
-to propagate, DHT lookups can need several hops for cold entries, operator
-admission needs governance, and certificate issuance depends on quorum
-liveness.
+Trade-offs: every registry stores everything, so storage does not shard across
+the federation; the audit log is per registry and is trusted at the strength of
+that registry's signature rather than proven to a client; and a client cannot
+independently prove that a registry's answer is consistent with its own history
+without asking peers. Solution 2 addresses that last point.
 
 Continue to [Solution 2: Ledger-anchored](../ledger-anchored).
