@@ -1,0 +1,18 @@
+{{- /* Project override: pick a mermaid theme that matches the active color scheme */ -}}
+<pre class="mermaid">{{ .Inner | htmlEscape | safeHTML -}}</pre>
+{{- if not (.Page.Store.Get "mermaid") -}}
+  {{- /* Include mermaid only the first time */ -}}
+  <script src="{{ "mermaid.min.js" | relURL }}"></script>
+  <script>
+    (function () {
+      var prefersDark = window.matchMedia
+        && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      mermaid.initialize({
+        startOnLoad: true,
+        flowchart: { useMaxWidth: true },
+        theme: prefersDark ? "dark" : "default"
+      });
+    })();
+  </script>
+  {{- .Page.Store.Set "mermaid" true -}}
+{{- end -}}
