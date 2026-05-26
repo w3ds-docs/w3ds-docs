@@ -30,7 +30,7 @@ The JSON wire form uses the reserved JSON-LD `@id` and `@type` keywords, leaving
 Four things every entity has:
 
 - An **identifier** (`@id`). A W3ID naming the subject the entity describes. Examples in this chapter use the `did:w3ds:<UUID>` form; W3ID can also be written in other forms in non-JSON-LD contexts.
-- A **type set** (`@type`). The set of entity types the subject is declared to be, as the union of types declared across its records. The set is unordered; all members are equal. On the wire, `@type` renders as a string when the set has one member or an array when it has multiple.
+- A **type set** (`@type`). The set of entity types the subject is declared to be, as the union of types declared by its records (a record may declare one type or several). The set is unordered; all members are equal. On the wire, `@type` renders as a string when the set has one member or an array when it has multiple.
 - A set of **properties**. Each property has a name and one or more values. Reads return the entity's current properties, filtered to what the reader has requested and is allowed to access.
 - A recoverable **history**. Every accepted write appends an immutable entry to the target record's history, capturing what changed, by whom, when, and against which type version. The entry shape and read interface are elaborated on a future page.
 
@@ -42,14 +42,14 @@ An entity's data lives in one or more **records**, each stored in some eVault. A
 
 Three consequences follow:
 
-- **An entity's data may be split across many records, in one or many eVaults.** A car's manufacturer may hold one record in its own eVault; the owner may hold a parallel record contributing ownership attributes; a service center may hold a third contributing maintenance attributes; a government registry may hold a fourth contributing registration attributes. A single eVault may also hold multiple records about the same subject, for example when different platforms operate on the user's eVault using different models. Each record contributes properties independently; how much a reader pulls together at read time (one type, a subset, or all) is a reader-side choice.
+- **An entity's data may be split across many records, in one or many eVaults.** A single eVault may hold several records about one subject when different services write under different models; different eVaults may also hold parallel records about the same subject. Each record contributes properties independently; how much a reader pulls together at read time (one type, a subset, or all) is a reader-side choice.
 - **References point at subjects, not records.** Following a reference means asking "which eVaults hold records about this subject?", not "where is the canonical record?". Cross-eVault navigation is part of read resolution, not part of the data shape.
 - **A subject's identity outlives any single eVault.** Migration, key rotation, or provider failure does not re-mint the subject's W3ID; the eVault hosting any record about the subject can change while the subject's identity stays the same.
 
-A short scenario, using mnemonic W3IDs for readability. The subject is a specific car (`did:w3ds:car-001`). Four distinct authorities each hold a record about it: the manufacturer that built it, the owner Alice who bought it, a service center that maintains it, and the government registry that licenses it. None of them is the subject:
+A short scenario, using mnemonic W3IDs for readability. The subject is a specific car (`did:w3ds:car-001`). Four records describe it:
 
 ```json
-// Manufacturer's eVault
+// Car's eVault (authored by manufacturer)
 {
   "@id": "did:w3ds:car-001",
   "@type": "auto:Vehicle",
@@ -59,17 +59,7 @@ A short scenario, using mnemonic W3IDs for readability. The subject is a specifi
 ```
 
 ```json
-// Owner Alice's eVault
-{
-  "@id": "did:w3ds:car-001",
-  "@type": "personal:Asset",
-  "name": "Goldie",
-  "acquiredAt": "2024-06-15"
-}
-```
-
-```json
-// Service center's eVault
+// Car's eVault (authored by service center)
 {
   "@id": "did:w3ds:car-001",
   "@type": "svc:Equipment",
@@ -79,7 +69,7 @@ A short scenario, using mnemonic W3IDs for readability. The subject is a specifi
 ```
 
 ```json
-// Government registry's eVault
+// Car's eVault (authored by government body)
 {
   "@id": "did:w3ds:car-001",
   "@type": "gov:RegisteredVehicle",
@@ -88,11 +78,23 @@ A short scenario, using mnemonic W3IDs for readability. The subject is a specifi
 }
 ```
 
-The four types come from four different models: the manufacturer uses an auto-industry model, the owner uses a personal-asset model, the service center uses a maintenance model, the government uses a vehicle-registration model. A reader resolving `did:w3ds:car-001` chooses how much of the entity to project. A request that projects through all four types yields a unified view of the entity as an `auto:Vehicle`, a `personal:Asset`, a `svc:Equipment`, and a `gov:RegisteredVehicle`, with properties from every contributing record accumulated. A request that projects through one type returns just the contributions of records carrying that type: a service-only client asking for `svc:Equipment` receives `lastServicedAt` and `nextDueAt`, nothing else. Each record is written in its own eVault under that eVault's sovereignty; merging is read-side and reader-driven. The [type system](types) page elaborates the type-set semantics, including how multi-valued properties such as `serviceHistory: [...]` accrete as additional records contribute entries.
+```json
+// Alice's eVault (authored by Alice)
+{
+  "@id": "did:w3ds:car-001",
+  "@type": "personal:Asset",
+  "name": "Goldie",
+  "acquiredAt": "2024-06-15"
+}
+```
 
-Property names can collide across models. Here, both the manufacturer's `auto:Vehicle` and the owner's `personal:Asset` declare a property labelled `name`, but they live in different models, so the labels resolve to different IRIs: the manufacturer's is `auto:name` (the product name, `"Volkswagen Golf"`); the owner's is `personal:name` (a pet name, `"Goldie"`). The CURIE prefix identifies the model the property belongs to, so the two `name`s are distinct properties at the underlying IRI level. A reader projecting through a single type sees one `name`; a multi-type merge exposes both, disambiguated by their prefix. The record identity section below shows the merged-view wire form with both names surfaced.
+In this example, three records live in the car's eVault and one in Alice's; all four use distinct models. A reader resolving `did:w3ds:car-001` chooses how much of the entity to project across them. Each record is under the storage sovereignty of the eVault holding it; merging is read-side and reader-driven.
 
-Alternative modelling: the owner's and service center's contributions could instead be separate entities (an `Ownership` entity referencing the car, a `ServiceRecord` entity referencing it). Parallel records and separate entities are both architecturally supported.
+Property names can collide across models. Both `auto:Vehicle` and `personal:Asset` declare a `name`, but the CURIE prefix resolves them to different IRIs: `auto:name` (the product name, `"Volkswagen Golf"`) and `personal:name` (a pet name, `"Goldie"`). A reader projecting through one type sees one `name`; a multi-type merge exposes both, as the merged view below shows.
+
+Instead of parallel records, the owner's and service center's contributions could be modeled as separate entities (an `Ownership` entity referencing the car, a `ServiceRecord` entity referencing it). Both shapes are architecturally supported.
+
+Overlapping models can collapse parallel contributions into one record. When two services share a base vocabulary (two social platforms both extending `social:Post`, say), a user's post can live as a single multi-typed record (`@type: ["platformA:Post", "platformB:Post"]`) held in the user's eVault. Both platforms have write access granted by the user; shared properties live under `social:`, platform-specific ones under each platform's prefix. The post is one subject, one record, with many cooperating writers.
 
 A user may operate one eVault or several (for role separation, risk segregation, jurisdictional placement, or provider redundancy). Each of the user's eVaults may hold one or more records about a subject; the subject's identity is the same across them.
 
@@ -100,69 +102,73 @@ A user may operate one eVault or several (for role separation, risk segregation,
 
 ## 3. Authority and roles
 
-Four layers of authority are in play when multiple parties interact with a subject:
+Three layers of authority are in play when multiple parties interact with a subject:
 
-- **Subject identity** is held by the **originator**: the eVault that first minted the subject's W3ID and registered it. Identity-layer concerns (W3ID transfer, retirement, key rotation, name binding) belong to the originator's eVault and are the identity chapter's concern. The originator does not thereby control what other eVaults may say about the subject.
-- **Record holdership** belongs to the eVault storing the record. The holder controls who may write to records it holds (itself and any delegated principals) and governs lifecycle decisions about them. Access rules are a future page.
-- **Record authorship** belongs to the principal that wrote the record, identified by attribution on each write. Holdership and authorship often coincide: in the worked example, each holder also authors its own record. They come apart when the holder grants write access to another principal, for example when a doctor writes a prescription into a patient's eVault. The record then lives under the holder's storage sovereignty while remaining the author's record.
-- **Domain-level roles** (author, contributor, editor, commenter, reviewer) belong to the type vocabulary, not to the architecture. A `social:BlogPost` type may declare `author` and `contributors` as properties referencing person W3IDs; the architecture does not name those roles.
+- **Subject identity** is held by the **originator**: the eVault that first minted the subject's W3ID and registered it. Identity-layer concerns (retirement, key rotation, etc.) belong to the originator's eVault and are the identity chapter's concern. The originator does not thereby control what other eVaults may say about the subject.
+- **Record holdership** belongs to the eVault storing the record. The eVault's controller (the principal acting on its behalf) decides who may write to records the eVault holds (the controller itself and any delegated principals) and governs lifecycle decisions about them. Access rules are a future page; how the controller is identified and how control transfers is the open question below.
+- **Record authorship** belongs to the principal that wrote the record, identified by attribution on each write. An eVault's controller may also author its records, or may grant write access to other principals. Either way, the record lives under the eVault's storage sovereignty while remaining the author's record.
 
-Three patterns for relating an actor to a subject:
-
-- **A property of the subject's record.** The actor is named in a property of the record (e.g., `author: did:w3ds:alice`, `contributors: [did:w3ds:bob]`). The record's holder decides whether and how the property is set. Use this when the actor's role is part of what the subject is (a post's author, a transaction's parties, a contract's signatories).
-- **A separate subject.** The actor's interaction is its own subject with its own W3ID, referencing the original (e.g., a `social:Comment` entity with `inReplyTo: did:w3ds:<post-W3ID>`). Use this when the interaction is a thing in its own right (comments, replies, reactions, citations). Patterns for referring to subjects external to W3DS that have no W3ID (DBpedia entities, Wikidata items, schema.org concepts, abstract concepts) are a separate concern, deferred to a future revision of this page.
-- **A parallel record about the same subject.** The actor writes a record with the same subject W3ID, typically held in their own eVault but optionally in any eVault that has granted them write access. The record may add a new type the subject is also of (multi-typing, as in the worked example above where the owner's record adds `personal:Asset`, the service center's adds `svc:Equipment`, and the government's adds `gov:RegisteredVehicle`) or contribute entries to multi-valued properties of the subject (each reactor's eVault adds one entry to `reactions: [...]`; each reader's eVault adds one entry to `readBy: [...]`). Parallel records and the separate-subject pattern are alternative modellings for many cases; the trade-off is that parallel records merge into the subject on resolve, while separate entities give each contribution its own W3ID and lifecycle.
-
-The architecture supports all three; choosing among them is a type-modeling decision.
+Domain-level roles (author, contributor, editor, commenter, reviewer) belong to the type vocabulary, not to the architecture. A `social:BlogPost` type may declare `author` and `contributors` as properties referencing person W3IDs; the architecture does not name those roles.
 
 > [!WARNING]
 > **Open question: Who may hold a parallel record about which subject?** Under the linked-data principle, any eVault may hold a record keyed by any subject W3ID. Whether the architecture restricts this for sensitive subject classes (people in particular), allows the originator to constrain it, or leaves it open and relies on reader-side trust filtering is undecided. Defamation, impersonation, and spam-resistance live in this gap.
 
+> [!WARNING]
+> **Open question: eVault control and transfer.** `w3ds:holder` names the eVault storing a record; who controls the eVault (access rules, lifecycle, transfer) is a separate concern. When subject ownership transfers, control of the subject's eVault should transfer too, without relocating data. The representation and transfer mechanism are deferred.
+
 ---
 
-## 4. Record identity as opt-in metadata
+## 4. Provenance as opt-in metadata
 
-When a consumer asks for attribution (which eVault asserted which property), the merged view exposes record identifiers as metadata:
+When a consumer asks for provenance, the merged view exposes record metadata:
 
 ```json
 {
   "@id": "did:w3ds:car-001",
   "@type": [
     "auto:Vehicle",
-    "personal:Asset",
     "svc:Equipment",
-    "gov:RegisteredVehicle"
+    "gov:RegisteredVehicle",
+    "personal:Asset"
   ],
   "auto:name": "Volkswagen Golf",
   "auto:vin": "WVWZZZ1KZ8W123456",
-  "personal:name": "Goldie",
-  "personal:acquiredAt": "2024-06-15",
   "svc:lastServicedAt": "2026-04-10",
   "svc:nextDueAt": "2027-04-10",
   "gov:licensePlate": "ABC-123",
   "gov:registeredOwner": "did:w3ds:alice",
+  "personal:name": "Goldie",
+  "personal:acquiredAt": "2024-06-15",
   "w3ds:record": [
     {
       "@id": "did:w3ds:rec-car-manufacturer",
+      "w3ds:holder": "did:w3ds:car-evault",
+      "w3ds:author": "did:w3ds:manufacturer",
       "w3ds:asserts": ["auto:name", "auto:vin"]
     },
     {
-      "@id": "did:w3ds:rec-car-owner",
-      "w3ds:asserts": ["personal:name", "personal:acquiredAt"]
-    },
-    {
       "@id": "did:w3ds:rec-car-service",
+      "w3ds:holder": "did:w3ds:car-evault",
+      "w3ds:author": "did:w3ds:service-center",
       "w3ds:asserts": ["svc:lastServicedAt", "svc:nextDueAt"]
     },
     {
       "@id": "did:w3ds:rec-car-gov",
+      "w3ds:holder": "did:w3ds:car-evault",
+      "w3ds:author": "did:w3ds:gov-body",
       "w3ds:asserts": ["gov:licensePlate", "gov:registeredOwner"]
+    },
+    {
+      "@id": "did:w3ds:rec-car-owner",
+      "w3ds:holder": "did:w3ds:alice-evault",
+      "w3ds:author": "did:w3ds:alice",
+      "w3ds:asserts": ["personal:name", "personal:acquiredAt"]
     }
   ]
 }
 ```
 
-The default wire form omits `w3ds:record`; record provenance surfaces only on request. Each record identifier is a W3ID in its own right, addressable independently of the subject. The `w3ds:` prefix names the foundational W3DS namespace, which houses architecture-level metadata (provenance, attribution, system-managed properties); domain vocabularies use their own prefixes (`auto:`, `personal:`, `svc:`, `gov:`).
+The default wire form omits `w3ds:record`; record provenance surfaces only on request. Each record identifier is a W3ID in its own right, addressable independently of the subject. The `w3ds:` prefix names the foundational W3DS namespace, which houses architecture-level metadata (provenance, system-managed properties); domain vocabularies use their own prefixes (`auto:`, `personal:`, `svc:`, `gov:`).
 
 A record's W3ID is stable across writes: it names the storage unit, not any particular state of it. Writes mutate the record's properties; the entries describing those writes form a recoverable history (elaborated on a future page) without changing the record's identity.
 
@@ -184,14 +190,16 @@ A **write** changes one or more properties of a record. The first write to a rec
 
 Five commitments:
 
-- **A write targets a single record.** The record carries its own type reference; validation runs against that type. Operations that span multiple records (whether in the same eVault or across eVaults) decompose into one write per record; observers may see them at different times.
+- **A write targets a single record.** The write declares the type it is being made under; validation runs against that type. A record's type set accumulates across writes. Operations that span multiple records (whether in the same eVault or across eVaults) decompose into one write per record; observers may see them at different times.
 - **A write originates from one service in one request.** Each write therefore carries a single attribution.
 - **A write names the properties it changes and commits them atomically.** All named properties on the record commit, or none do; properties not named are untouched. Two services writing different properties (whether to the same record or to different records) do not collide. Outcomes that depend on more than one write are coordinated above the data layer.
 - **Each property has its own access rules.** A write that touches any property the service cannot change is rejected entirely.
 - **Writes may opt into state-gating.** A write may declare per-property preconditions; if any fails, the entire write is rejected.
 
+The validation contract is strict on the writer's side, relaxed on the reader's. Each write succeeds only against its declared type; readers project through chosen types and apply their own conformance policy. The [type system](types) page elaborates type extension and inherited-property rules.
+
 > [!WARNING]
-> **Open question: ACL defaults and inheritance.** The commitment names the grain at which access is evaluated (per property); it does not say where each property's effective rule comes from. Defaults could live at the record level (one ACL covers every property in the record unless overridden per slot), the type level (the type declares default rules for its declared slots), the eVault level (a user-set baseline that types and records refine), or other levels yet to be named.
+> **Open question: ACL defaults and inheritance.** The commitment names the grain at which access is evaluated (per property); it does not say where each property's effective rule comes from. Defaults could live at the record level (one ACL covers every property in the record unless overridden per property), the type level (the type declares default rules for its declared properties), the eVault level (a user-set baseline that types and records refine), or other levels yet to be named.
 
 > [!WARNING]
 > **Open question: Multi-record batching.** Single-record writes leave cross-record consistency as an application concern. Should the architecture provide an additive batching mechanism that commits writes to several records atomically (across one eVault or several), and if so under what semantics?

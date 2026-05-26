@@ -39,6 +39,8 @@ An entity may carry several entity types in its **type set**, accumulated across
 
 An entity type can extend one or more parent types, inheriting their declared properties. Parents must be entity types defined in imported W3DS models; inheritance graphs stay within W3DS. External vocabularies participate via alignment, not as inheritance targets.
 
+**Inherited property constraints are frozen.** A subtype inherits the parent's properties unchanged: it cannot narrow, widen, or otherwise redefine inherited property constraints (range, multiplicity, required-vs-optional, value constraints). A subtype may declare new properties with whatever constraints it likes. A service that needs stricter validation on a shared property either introduces its own or applies the constraint above the data architecture, in its own service layer.
+
 > [!WARNING]
 > **Open question: Conflicting types and model evolution across records.** Records about the same subject may use different (or semantically conflicting) types and different major versions of the same type. The architecture surfaces all records with attribution but does not pick a winner. Specific unresolved cases include semantic conflicts between co-present types, cross-major drift of the same model (where properties may have been renamed or regrounded between majors), and single-valued property values asserted by different records. Whether to commit to default resolution rules, and where those rules belong (reads, concurrency, types), is deferred.
 
