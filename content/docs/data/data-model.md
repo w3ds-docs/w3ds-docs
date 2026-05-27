@@ -15,7 +15,7 @@ An entity is the logical representation of a subject: an identifier, a set of ty
 
 ```json
 {
-  "@id": "did:w3ds:5f8a1c2d-9b40-4f5d-9e6e-8c1a4b7d2e3f",
+  "@id": "w3id:5f8a1c2d-9b40-4f5d-9e6e-8c1a4b7d2e3f",
   "@type": "social:BlogPost",
   "title": "Walking the Camino, day 1",
   "body": "Started today from Saint-Jean-Pied-de-Port. Twenty kilometers in."
@@ -29,7 +29,7 @@ The JSON wire form uses the reserved JSON-LD `@id` and `@type` keywords, leaving
 
 Four things every entity has:
 
-- An **identifier** (`@id`). A W3ID naming the subject the entity describes. Examples in this chapter use the `did:w3ds:<UUID>` form; W3ID can also be written in other forms in non-JSON-LD contexts.
+- An **identifier** (`@id`). A W3ID naming the subject the entity describes. Examples in this chapter use the `w3id:<UUID>` form; W3ID can also be written in other forms in non-JSON-LD contexts.
 - A **type set** (`@type`). The set of entity types the subject is declared to be, as the union of types declared by its records (a record may declare one type or several). The set is unordered; all members are equal. On the wire, `@type` renders as a string when the set has one member or an array when it has multiple.
 - A set of **properties**. Each property has a name and one or more values. Reads return the entity's current properties, filtered to what the reader has requested and is allowed to access.
 - A recoverable **history**. Every accepted write appends an immutable entry to the target record's history, capturing what changed, by whom, when, and against which type version. The entry shape and read interface are elaborated on a future page.
@@ -38,7 +38,7 @@ Four things every entity has:
 
 ## 2. Parallel records
 
-An entity's data lives in one or more **records**, each stored in some eVault. A record carries the subject's W3ID as its `@id` and has its own **record identifier**, a separate W3ID naming the record itself, surfaced as metadata only when a consumer asks for provenance or attribution.
+An entity's data lives in one or more **records**, each stored in some eVault. A record carries the subject's W3ID as its `@id` and has its own **record identifier**: an eVault-scoped W3ID (`w3id:<eVault>/<record>`) naming the storage unit itself, surfaced as metadata only when a consumer asks for provenance.
 
 Three consequences follow:
 
@@ -46,12 +46,12 @@ Three consequences follow:
 - **References point at subjects, not records.** Following a reference means asking "which eVaults hold records about this subject?", not "where is the canonical record?". Cross-eVault navigation is part of read resolution, not part of the data shape.
 - **A subject's identity outlives any single eVault.** Migration, key rotation, or provider failure does not re-mint the subject's W3ID; the eVault hosting any record about the subject can change while the subject's identity stays the same.
 
-A short scenario, using mnemonic W3IDs for readability. The subject is a specific car (`did:w3ds:car-001`). Four records describe it:
+A short scenario, using mnemonic W3IDs for readability. The subject is a specific car (`w3id:car-001`). Four records describe it:
 
 ```json
 // Car's eVault (authored by manufacturer)
 {
-  "@id": "did:w3ds:car-001",
+  "@id": "w3id:car-001",
   "@type": "auto:Vehicle",
   "name": "Volkswagen Golf",
   "vin": "WVWZZZ1KZ8W123456"
@@ -61,7 +61,7 @@ A short scenario, using mnemonic W3IDs for readability. The subject is a specifi
 ```json
 // Car's eVault (authored by service center)
 {
-  "@id": "did:w3ds:car-001",
+  "@id": "w3id:car-001",
   "@type": "svc:Equipment",
   "lastServicedAt": "2026-04-10",
   "nextDueAt": "2027-04-10"
@@ -71,24 +71,24 @@ A short scenario, using mnemonic W3IDs for readability. The subject is a specifi
 ```json
 // Car's eVault (authored by government body)
 {
-  "@id": "did:w3ds:car-001",
+  "@id": "w3id:car-001",
   "@type": "gov:RegisteredVehicle",
   "licensePlate": "ABC-123",
-  "registeredOwner": "did:w3ds:alice"
+  "registeredOwner": "w3id:alice"
 }
 ```
 
 ```json
 // Alice's eVault (authored by Alice)
 {
-  "@id": "did:w3ds:car-001",
+  "@id": "w3id:car-001",
   "@type": "personal:Asset",
   "name": "Goldie",
   "acquiredAt": "2024-06-15"
 }
 ```
 
-In this example, three records live in the car's eVault and one in Alice's; all four use distinct models. A reader resolving `did:w3ds:car-001` chooses how much of the entity to project across them. Each record is under the storage sovereignty of the eVault holding it; merging is read-side and reader-driven.
+In this example, three records live in the car's eVault and one in Alice's; all four use distinct models. A reader resolving `w3id:car-001` chooses how much of the entity to project across them. Each record is under the storage sovereignty of the eVault holding it; merging is read-side and reader-driven.
 
 Property names can collide across models. Both `auto:Vehicle` and `personal:Asset` declare a `name`, but the CURIE prefix resolves them to different IRIs: `auto:name` (the product name, `"Volkswagen Golf"`) and `personal:name` (a pet name, `"Goldie"`). A reader projecting through one type sees one `name`; a multi-type merge exposes both, as the merged view below shows.
 
@@ -104,7 +104,7 @@ A user may operate one eVault or several (for role separation, risk segregation,
 
 Three layers of authority are in play when multiple parties interact with a subject:
 
-- **Subject identity** is held by the **originator**: the eVault that first minted the subject's W3ID and registered it. Identity-layer concerns (retirement, key rotation, etc.) belong to the originator's eVault and are the identity chapter's concern. The originator does not thereby control what other eVaults may say about the subject.
+- **Subject identity** is held by the **originator**: the eVault that first minted the subject's W3ID and registered it. Identity-layer concerns (retirement, key rotation, etc.) belong to the originator's eVault and are the identity chapter's concern. The originator is not encoded in the identifier; it is recovered by lookup. The originator does not control what other eVaults may say about the subject.
 - **Record holdership** belongs to the eVault storing the record. The eVault's controller (the principal acting on its behalf) decides who may write to records the eVault holds (the controller itself and any delegated principals) and governs lifecycle decisions about them. Access rules are a future page; how the controller is identified and how control transfers is the open question below.
 - **Record authorship** belongs to the principal that wrote the record, identified by attribution on each write. An eVault's controller may also author its records, or may grant write access to other principals. Either way, the record lives under the eVault's storage sovereignty while remaining the author's record.
 
@@ -124,7 +124,7 @@ When a consumer asks for provenance, the merged view exposes record metadata:
 
 ```json
 {
-  "@id": "did:w3ds:car-001",
+  "@id": "w3id:car-001",
   "@type": [
     "auto:Vehicle",
     "svc:Equipment",
@@ -136,39 +136,39 @@ When a consumer asks for provenance, the merged view exposes record metadata:
   "svc:lastServicedAt": "2026-04-10",
   "svc:nextDueAt": "2027-04-10",
   "gov:licensePlate": "ABC-123",
-  "gov:registeredOwner": "did:w3ds:alice",
+  "gov:registeredOwner": "w3id:alice",
   "personal:name": "Goldie",
   "personal:acquiredAt": "2024-06-15",
   "w3ds:record": [
     {
-      "@id": "did:w3ds:rec-car-manufacturer",
-      "w3ds:holder": "did:w3ds:car-evault",
-      "w3ds:author": "did:w3ds:manufacturer",
+      "@id": "w3id:car-evault/rec-manufacturer",
+      "w3ds:holder": "w3id:car-evault",
+      "w3ds:author": "w3id:manufacturer",
       "w3ds:asserts": ["auto:name", "auto:vin"]
     },
     {
-      "@id": "did:w3ds:rec-car-service",
-      "w3ds:holder": "did:w3ds:car-evault",
-      "w3ds:author": "did:w3ds:service-center",
+      "@id": "w3id:car-evault/rec-service",
+      "w3ds:holder": "w3id:car-evault",
+      "w3ds:author": "w3id:service-center",
       "w3ds:asserts": ["svc:lastServicedAt", "svc:nextDueAt"]
     },
     {
-      "@id": "did:w3ds:rec-car-gov",
-      "w3ds:holder": "did:w3ds:car-evault",
-      "w3ds:author": "did:w3ds:gov-body",
+      "@id": "w3id:car-evault/rec-gov",
+      "w3ds:holder": "w3id:car-evault",
+      "w3ds:author": "w3id:gov-body",
       "w3ds:asserts": ["gov:licensePlate", "gov:registeredOwner"]
     },
     {
-      "@id": "did:w3ds:rec-car-owner",
-      "w3ds:holder": "did:w3ds:alice-evault",
-      "w3ds:author": "did:w3ds:alice",
+      "@id": "w3id:alice-evault/rec-owner",
+      "w3ds:holder": "w3id:alice-evault",
+      "w3ds:author": "w3id:alice",
       "w3ds:asserts": ["personal:name", "personal:acquiredAt"]
     }
   ]
 }
 ```
 
-The default wire form omits `w3ds:record`; record provenance surfaces only on request. Each record identifier is a W3ID in its own right, addressable independently of the subject. The `w3ds:` prefix names the foundational W3DS namespace, which houses architecture-level metadata (provenance, system-managed properties); domain vocabularies use their own prefixes (`auto:`, `personal:`, `svc:`, `gov:`).
+Record provenance surfaces only on request. Each record identifier is an eVault-scoped W3ID (`w3id:<eVault>/<record>`), globally unique and addressable independently of the subject. The `w3ds:` prefix names the foundational W3DS namespace, which houses architecture-level metadata (provenance, system-managed properties); domain vocabularies use their own prefixes (`auto:`, `personal:`, `svc:`, `gov:`).
 
 A record's W3ID is stable across writes: it names the storage unit, not any particular state of it. Writes mutate the record's properties; the entries describing those writes form a recoverable history (elaborated on a future page) without changing the record's identity.
 
@@ -241,11 +241,11 @@ A property whose value is a subject's W3ID is a reference.
 
 ```json
 {
-  "@id": "did:w3ds:7c3e9f1a-2b8d-4e3a-9c1f-6e5d7a8b3c2d",
+  "@id": "w3id:7c3e9f1a-2b8d-4e3a-9c1f-6e5d7a8b3c2d",
   "@type": "social:BlogPost",
   "title": "Walking the Camino, day 1",
   "body": "Started today from Saint-Jean-Pied-de-Port.",
-  "author": "did:w3ds:9b8e2f4a-1c3d-4e5f-8a7b-6c5d4e3f2a1b"
+  "author": "w3id:9b8e2f4a-1c3d-4e5f-8a7b-6c5d4e3f2a1b"
 }
 ```
 

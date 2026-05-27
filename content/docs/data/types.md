@@ -75,7 +75,7 @@ The architecture commits to:
 
 ## 3. Semantic grounding
 
-Every entity type, property, and custom value type has a **W3DS-native identity**: an IRI formed by the model's W3ID plus an anchor naming the element (e.g. `did:w3ds:abc#BlogPost`, `did:w3ds:abc#title`, or `did:w3ds:abc#HashtagString`). These elements do not have their own W3IDs; the model's W3ID is the root from which their IRIs derive. The identity is implicit (derived from the model and the short name) and versionless. Short labels are publisher-defined and fixed for the model version.
+Every entity type, property, and custom value type has a **W3DS-native identity**: an IRI formed by the model's W3ID plus an anchor naming the element (e.g. `w3id:abc#BlogPost`, `w3id:abc#title`, or `w3id:abc#HashtagString`). These elements do not have their own W3IDs; the model's W3ID is the root from which their IRIs derive. The identity is implicit (derived from the model and the short name) and versionless. Short labels are publisher-defined and fixed for the model version.
 
 The W3DS-native identity resolves to the element's **declaration** in the published model: its structural commitments (properties, ranges, constraints) and a human-readable **description** of what the element means. The declaration is published, signed, and immutable with the rest of the model, so any consumer that resolves the IRI reads the same definition. The IRI is the address; the declaration is the meaning.
 
@@ -115,7 +115,7 @@ Models are authored in **LinkML** (YAML). LinkML's modeling primitives (`class_u
 A minimal example:
 
 ```yaml
-id: did:w3ds:5f8a1c2d-9b40-4f5d-9e6e-8c1a4b7d2e3f
+id: w3id:5f8a1c2d-9b40-4f5d-9e6e-8c1a4b7d2e3f
 name: social
 version: 1.0.0
 
@@ -123,11 +123,11 @@ prefixes:
   as: https://www.w3.org/ns/activitystreams#
   linkml: https://w3id.org/linkml/
   schema: https://schema.org/
-  social: did:w3ds:5f8a1c2d-9b40-4f5d-9e6e-8c1a4b7d2e3f#
+  social: w3id:5f8a1c2d-9b40-4f5d-9e6e-8c1a4b7d2e3f#
 
 imports:
   - linkml:types
-  - did:w3ds:7d2c4f6a-3b81-4e5d-9a2c-8e1b3f5d7a9c/v/2.3.0 # W3DS-published model aligned with schema.org
+  - w3id:7d2c4f6a-3b81-4e5d-9a2c-8e1b3f5d7a9c/v/2.3.0 # W3DS-published model aligned with schema.org
 
 classes:
   BlogPost:
