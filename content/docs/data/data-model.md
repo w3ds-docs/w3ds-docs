@@ -96,7 +96,10 @@ Instead of parallel records, the owner's and service center's contributions coul
 
 Overlapping models can collapse parallel contributions into one record. When two services share a base vocabulary (two social platforms both extending `social:Post`, say), a user's post can live as a single multi-typed record (`@type: ["platformA:Post", "platformB:Post"]`) held in the user's eVault. Both platforms have write access granted by the user; shared properties live under `social:`, platform-specific ones under each platform's prefix. The post is one subject, one record, with many cooperating writers.
 
-A user may operate one eVault or several (for role separation, risk segregation, jurisdictional placement, or provider redundancy). Each of the user's eVaults may hold one or more records about a subject; the subject's identity is the same across them.
+A person operates exactly one eVault. This constrains how many eVaults a single person runs, not how a subject's records are distributed: a subject's data may still span several eVaults (the car above has records in its own eVault and in Alice's).
+
+> [!NOTE]
+> One person, one eVault is a current policy, not a constraint the data model imposes. The model already supports a subject's records being spread across eVaults, so allowing a person several eVaults later (for role separation, risk segregation, jurisdictional placement, or provider redundancy) would not require changing the data model described here.
 
 ---
 
@@ -190,7 +193,7 @@ A **write** changes one or more properties of a record. The first write to a rec
 
 Five commitments:
 
-- **A write targets a single record.** The write declares the type it is being made under; validation runs against that type. A record's type set accumulates across writes. Operations that span multiple records (whether in the same eVault or across eVaults) decompose into one write per record; observers may see them at different times.
+- **A write targets a single record.** The write declares the type it is being made under; validation runs against that type. A record's type set accumulates across writes. An operation that spans multiple records decomposes into one write per record. Because each record lives in a single eVault, a write never crosses an eVault boundary: an operation that spans multiple eVaults decomposes into separate writes per eVault. Since eVaults are independent sovereign stores, no operation commits atomically across them, and observers may see the component writes at different times.
 - **A write originates from one service in one request.** Each write therefore carries a single attribution.
 - **A write names the properties it changes and commits them atomically.** All named properties on the record commit, or none do; properties not named are untouched. Two services writing different properties (whether to the same record or to different records) do not collide. Outcomes that depend on more than one write are coordinated above the data layer.
 - **Each property has its own access rules.** A write that touches any property the service cannot change is rejected entirely.
@@ -202,7 +205,7 @@ The validation contract is strict on the writer's side, relaxed on the reader's.
 > **Open question: ACL defaults and inheritance.** The commitment names the grain at which access is evaluated (per property); it does not say where each property's effective rule comes from. Defaults could live at the record level (one ACL covers every property in the record unless overridden per property), the type level (the type declares default rules for its declared properties), the eVault level (a user-set baseline that types and records refine), or other levels yet to be named.
 
 > [!WARNING]
-> **Open question: Multi-record batching.** Single-record writes leave cross-record consistency as an application concern. Should the architecture provide an additive batching mechanism that commits writes to several records atomically (across one eVault or several), and if so under what semantics?
+> **Open question: Multi-record batching.** Single-record writes leave cross-record consistency as an application concern. Should the architecture provide an additive batching mechanism that commits writes to several records in a single eVault atomically, and if so under what semantics? Batching cannot span eVaults: an eVault is a sovereign store, so cross-eVault operations always decompose into per-eVault writes (see the first commitment above).
 
 ---
 
