@@ -5,39 +5,53 @@ weight: 3
 
 # Creation, resolution, transfer, conflicts
 
-A W3ID lives a whole life: it is created, it is looked up by other systems,
-it can be moved to a new eVault, and once in a while two people may
-accidentally pick the same one. This page walks through each of those four
-moments.
+A W3ID lives a whole life: it is created, it is registered, it is looked up
+by other systems, it can be moved to a new eVault, and once in a while
+someone may end up with the same one as you, by accident or on purpose. This
+page walks through each of those moments.
 
-## Creating a W3ID
+## Creation and registration are two separate steps
 
-A new W3ID is normally created at the moment a person, group, or device gets
-their first eVault. The wallet app generates the UUID, asks a small set of
-independent **timestamp witnesses** to vouch for the creation time, and then
-hands the whole creation record to a registry.
+Making a W3ID and registering it are **not** the same event, and it helps to
+keep them apart.
 
 > **In plain terms**
 >
-> When you make a new W3ID, you do not just pick a name. You also gather
-> signed notes from several independent timestamp services saying "yes, this
-> name first appeared at this moment". That makes it very hard for someone
-> else to come along later and claim they had it first.
+> Creating a W3ID is just picking a long random string of characters. Anyone
+> can do that on their own, offline, with no one watching. Registering it is
+> the separate step where it is announced to a registry so the rest of W3DS
+> can find it. The registry only gets involved at the second step, and it may
+> not even hear about a new eName until some time after it was created.
+
+### Step 1: creating the identifier
+
+A W3ID is created by sampling a random UUID. That is the whole of creation:
+no network, no registry, no witnesses are required just to bring an
+identifier into existence.
+
+### Step 2: registering a global eName
+
+To turn a freshly created W3ID into a resolvable **eName**, it is registered.
+This is normally done when a person, group, or device gets their first eVault.
+The **eVault** generates the UUID and asks a small set of independent
+**timestamp witnesses** to vouch for the creation time, then submits the
+creation record to a registry. The eVault, not the wallet, does this on
+purpose: an eVault has a reputation to protect and an interest in registering
+a genuinely unique identifier, whereas a throwaway wallet has nothing at stake
+and could mint a clashing identifier without consequence.
 
 ```mermaid
 sequenceDiagram
-    participant Wallet as Wallet (yours)
+    participant Vault as Your eVault
     participant Witnesses as Timestamp witnesses
-    participant Vault as eVault provisioning
     participant Registry as Registry
 
-    Wallet->>Wallet: 1. Pick a UUID at random
-    Wallet->>Witnesses: 2. Ask several to timestamp it
-    Witnesses-->>Wallet: 3. Signed time stamps
-    Wallet->>Vault: 4. Create my eVault
-    Wallet->>Registry: 5. Register the eName with the creation record
-    Registry->>Registry: 6. Check nobody else has it already
-    Registry-->>Wallet: 7. Done
+    Vault->>Vault: 1. Generate a UUID at random
+    Vault->>Witnesses: 2. Ask several to timestamp it
+    Witnesses-->>Vault: 3. Signed time stamps
+    Vault->>Registry: 4. Register the eName with the creation record
+    Registry->>Registry: 5. Verify the witnesses and check nobody else has it
+    Registry-->>Vault: 6. Registered
 ```
 
 A few rules from the requirements:
@@ -46,9 +60,20 @@ A few rules from the requirements:
 - The timestamp **should** be backed by signed witnesses, ideally a quorum
   like **7 out of 10** independent witnesses, so a single rogue witness
   cannot lie about the time.
-- The registry **must** do a best-effort check to see whether someone else
-  already registered the same name. The check is best-effort because a
-  conflict can still happen, see [Conflicts](#conflicts) below.
+- At registration the registry **must** verify the creation record and do a
+  best-effort check to see whether someone else already registered the same
+  name. The check is best-effort because a conflict can still happen, see
+  [Conflicts](#conflicts) below.
+
+### Creating a local W3ID
+
+A **local** W3ID is even simpler. It is created the same way (sample a random
+UUID), but it is **never registered**, because it only needs to be unique
+inside one eVault, not across the whole ecosystem. There are no witnesses and
+no registry involved. The eVault that owns it just makes sure it does not
+reuse a local UUID it has already used. A local W3ID only becomes globally
+findable if it is later promoted and registered, at which point it follows
+the global registration flow above.
 
 ### Reserving a W3ID for someone who is not on W3DS yet
 
@@ -114,11 +139,24 @@ The transfer record carries:
 A registry will only point your eName at the new eVault if the chain of
 transfer records links cleanly back to your original creation record.
 
+> **Out of scope: automatic failover to a backup eVault**
+>
+> Switching from a primary eVault to a backup copy is a related but separate
+> problem. It should ideally happen automatically, without a fresh manual
+> signature from the user, which would likely need pre-signed transfer
+> records prepared in advance. That mechanism is out of scope for this
+> identifiers section and is left for the eVault and recovery design.
+
 ## Conflicts
 
-Sometimes two creations slip past the duplicate check, for example because
-two registries were temporarily out of touch. The W3ID requirements treat
-duplicates as **conflicts**, never as something to be quietly merged.
+Sometimes two records end up claiming the same eName. This can happen by
+accident, for example because two registries were temporarily out of touch
+when each accepted a registration. It can also happen on purpose, when
+someone deliberately tries to register an eName that clashes with yours in
+order to impersonate you or hijack lookups. The W3ID requirements treat
+duplicates as **conflicts** either way, never as something to be quietly
+merged, and the oldest properly witnessed creation timestamp is what defeats
+a malicious latecomer.
 
 The picture below shows what a conflict actually is: two registries each
 hold their own pile of records, and one eName happens to appear in both

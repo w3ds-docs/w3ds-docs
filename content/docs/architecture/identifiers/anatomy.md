@@ -12,9 +12,9 @@ never pick the same one.
 
 > **In plain terms**
 >
-> Think of it as a serial number. It is long enough that no two people will
-> get the same one by accident. It has a fixed shape so software can recognise
-> it. It uses lowercase or uppercase, both are accepted.
+> It is just a long chain of characters. It is long enough that no two people
+> will get the same one by accident. It has a fixed shape so software can
+> recognise it. It uses lowercase or uppercase, both are accepted.
 
 ## The shape
 
@@ -105,11 +105,39 @@ Scoped local W3ID:          @e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a/f2a6743e-8d5b-
 ## Rules to remember
 
 - A W3ID **is** a UUID, written with the standard dashes. Case is ignored.
-- A global W3ID **starts with `@`**. A local one does not.
-- An **eName** is just a global W3ID that has been registered, so the rest
-  of W3DS can find it.
+- A global W3ID **starts with `@`** and **is registered in a registry**, so
+  the rest of W3DS can find it. A local one does neither.
+- An **eName** is a global W3ID whose subject is a first-class citizen of the
+  ecosystem: a person, organisation, group, device, or eVault controller.
+  Every eName is a registered global W3ID; not every registered global W3ID
+  is an eName.
 - The UUID space is huge (around 5 followed by 36 zeros), so the chance of
   two random W3IDs colliding is essentially zero. If we ever needed more
   room, the format leaves space for a bigger identifier later.
+
+## Free identifiers
+
+Not every identifier in the ecosystem points at something that can be looked
+up or owned. A plain word like `Paris` or `Communism` is also a valid
+identifier. It just does not behave like a W3ID: nobody owns it, no registry
+resolves it, and there is no eVault behind it.
+
+> **In plain terms**
+>
+> Some names refer to a specific, findable thing, like a person's eVault.
+> Other names refer to an idea or a place that everyone can mention but
+> nobody controls. Both are allowed. The difference is that the first kind
+> can be resolved to a real location and is owned by someone, while the
+> second kind is just a shared label whose meaning is left to whoever reads
+> it.
+
+So identifiers fall into two broad groups:
+
+- **Resolvable, owned identifiers**: W3IDs and eNames. They are registered,
+  they resolve to an eVault, and a controller is responsible for them.
+- **Free identifiers**: ordinary words and phrases. They need no resolution,
+  have no owner, and their meaning is a matter of interpretation. The
+  ecosystem allows them so that anything can be referred to, even things that
+  have no eVault and never will.
 
 For full format details, see the [W3ID prototype page](/docs/W3DS%20Basics/W3ID).
