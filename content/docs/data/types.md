@@ -33,6 +33,9 @@ A range is one of three families:
 All property names in a write must be declared, otherwise the write is rejected by the eVault. Service-internal data without a declared type lives in the service's local storage.
 
 > [!WARNING]
+> **Open question: Undeclared literal properties and types.** W3DS requires every property name in a write to be declared, and every type to resolve to a published declaration. A proposal under discussion is to also allow undeclared, reader-interpreted values where no vocabulary exists yet: a property whose value is a bare literal with no declared type, or a non-resolvable literal type (for example "a mammal") left to reader interpretation.
+
+> [!WARNING]
 > **Open question: Ordering on multi-valued properties.** A multi-valued property may be unordered (a set) or ordered (a list); the two have different storage and convergence semantics. Where does ordering sit in the type definition, and does it carry the same weight as value type and multiplicity?
 
 An entity may carry several entity types in its **type set**, accumulated across the records that describe it.
@@ -40,6 +43,9 @@ An entity may carry several entity types in its **type set**, accumulated across
 An entity type can extend one or more parent types, inheriting their declared properties. Parents must be entity types defined in imported W3DS models; inheritance graphs stay within W3DS. External vocabularies participate via alignment, not as inheritance targets.
 
 **Inherited property constraints are frozen.** A subtype inherits the parent's properties unchanged: it cannot narrow, widen, or otherwise redefine inherited property constraints (range, multiplicity, required-vs-optional, value constraints). A subtype may declare new properties with whatever constraints it likes. A service that needs stricter validation on a shared property either introduces its own or applies the constraint above the data architecture, in its own service layer.
+
+> [!NOTE]
+> Why inherited constraints are frozen: a reader projecting an entity through a parent type must get valid data without resolving the subtype. Freezing keeps every subtype substitutable for its parent, so a parent-type projection never has to know which subtype wrote the data. Allowing a subtype to narrow or widen an inherited constraint would break that substitutability and force readers to resolve the full subtype before trusting the parent-type view.
 
 > [!WARNING]
 > **Open question: Conflicting types and model evolution across records.** Records about the same subject may use different (or semantically conflicting) types and different major versions of the same type. The architecture surfaces all records with attribution but does not pick a winner. Specific unresolved cases include semantic conflicts between co-present types, cross-major drift of the same model (where properties may have been renamed or regrounded between majors), and single-valued property values asserted by different records. Whether to commit to default resolution rules, and where those rules belong (reads, concurrency, types), is deferred.

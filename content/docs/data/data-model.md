@@ -101,6 +101,9 @@ A person operates exactly one eVault. This constrains how many eVaults a single 
 > [!NOTE]
 > One person, one eVault is a current policy, not a constraint the data model imposes. The model already supports a subject's records being spread across eVaults, so allowing a person several eVaults later (for role separation, risk segregation, jurisdictional placement, or provider redundancy) would not require changing the data model described here.
 
+> [!WARNING]
+> **Open question: Cross-eVault record discovery.** Resolving a subject reaches the originator's eVault, but the architecture does not yet specify how a reader discovers parallel records about that subject held in other eVaults (Alice's record about `w3id:car-001`, for example). A subject-keyed registry entry that resolves to the originator may not by itself reveal those other records.
+
 ---
 
 ## 3. Authority and roles
@@ -108,7 +111,7 @@ A person operates exactly one eVault. This constrains how many eVaults a single 
 Three layers of authority are in play when multiple parties interact with a subject:
 
 - **Subject identity** is held by the **originator**: the eVault that first minted the subject's W3ID and registered it. Identity-layer concerns (retirement, key rotation, etc.) belong to the originator's eVault and are the identity chapter's concern. The originator is not encoded in the identifier; it is recovered by lookup. The originator does not control what other eVaults may say about the subject.
-- **Record holdership** belongs to the eVault storing the record. The eVault's controller (the principal acting on its behalf) decides who may write to records the eVault holds (the controller itself and any delegated principals) and governs lifecycle decisions about them. Access rules are a future page; how the controller is identified and how control transfers is the open question below.
+- **Record holdership** belongs to the eVault storing the record. The eVault's controller (the principal acting on its behalf) decides who may write to records the eVault holds (the controller itself and any delegated principals) and governs lifecycle decisions about them. Access rules are the access chapter's concern; how the controller is identified and how control transfers is the open question below.
 - **Record authorship** belongs to the principal that wrote the record, identified by attribution on each write. An eVault's controller may also author its records, or may grant write access to other principals. Either way, the record lives under the eVault's storage sovereignty while remaining the author's record.
 
 Domain-level roles (author, contributor, editor, commenter, reviewer) belong to the type vocabulary, not to the architecture. A `social:BlogPost` type may declare `author` and `contributors` as properties referencing person W3IDs; the architecture does not name those roles.
@@ -196,13 +199,10 @@ Five commitments:
 - **A write targets a single record.** The write declares the type it is being made under; validation runs against that type. A record's type set accumulates across writes. An operation that spans multiple records decomposes into one write per record. Because each record lives in a single eVault, a write never crosses an eVault boundary: an operation that spans multiple eVaults decomposes into separate writes per eVault. Since eVaults are independent sovereign stores, no operation commits atomically across them, and observers may see the component writes at different times.
 - **A write originates from one service in one request.** Each write therefore carries a single attribution.
 - **A write names the properties it changes and commits them atomically.** All named properties on the record commit, or none do; properties not named are untouched. Two services writing different properties (whether to the same record or to different records) do not collide. Outcomes that depend on more than one write are coordinated above the data layer.
-- **Each property has its own access rules.** A write that touches any property the service cannot change is rejected entirely.
+- **A write is validated as a whole.** Each named property is validated against the declared type; if any property fails, the entire write is rejected and the record is left unchanged, never partially applied.
 - **Writes may opt into state-gating.** A write may declare per-property preconditions; if any fails, the entire write is rejected.
 
 The validation contract is strict on the writer's side, relaxed on the reader's. Each write succeeds only against its declared type; readers project through chosen types and apply their own conformance policy. The [type system](types) page elaborates type extension and inherited-property rules.
-
-> [!WARNING]
-> **Open question: ACL defaults and inheritance.** The commitment names the grain at which access is evaluated (per property); it does not say where each property's effective rule comes from. Defaults could live at the record level (one ACL covers every property in the record unless overridden per property), the type level (the type declares default rules for its declared properties), the eVault level (a user-set baseline that types and records refine), or other levels yet to be named.
 
 > [!WARNING]
 > **Open question: Multi-record batching.** Single-record writes leave cross-record consistency as an application concern. Should the architecture provide an additive batching mechanism that commits writes to several records in a single eVault atomically, and if so under what semantics? Batching cannot span eVaults: an eVault is a sovereign store, so cross-eVault operations always decompose into per-eVault writes (see the first commitment above).
