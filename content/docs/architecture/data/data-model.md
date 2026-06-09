@@ -176,7 +176,7 @@ When a consumer asks for provenance, the merged view exposes record metadata:
 
 Record provenance surfaces only on request. Each record identifier is an eVault-scoped W3ID (`w3id:<eVault>/<record>`), globally unique and addressable independently of the subject. The `w3ds:` prefix names the foundational W3DS namespace, which houses architecture-level metadata (provenance, system-managed properties); domain vocabularies use their own prefixes (`auto:`, `personal:`, `svc:`, `gov:`).
 
-A record's W3ID is stable across writes: it names the storage unit, not any particular state of it. Writes mutate the record's properties; the entries describing those writes form a recoverable history (elaborated on a future page) without changing the record's identity.
+A record's W3ID is stable across writes: it names the storage unit, not any particular state of it. Writes mutate the property values held in the record; the entries describing those writes form a recoverable history (elaborated on a future page) without changing the record's identity.
 
 > [!WARNING]
 > **Open question: Provenance vocabulary alignment.** Should `w3ds:record` align with an established provenance ontology, notably W3C [PROV-O](https://www.w3.org/TR/prov-o/)? The current shape is W3DS-internal; alignment is deferred.
@@ -185,7 +185,7 @@ A record's W3ID is stable across writes: it names the storage unit, not any part
 
 ## 5. Writes
 
-A **write** changes one or more properties of a record. The first write to a record creates it; subsequent writes update it.
+A **write** changes one or more property values held in a record. The first write to a record creates it; subsequent writes update it.
 
 ```json
 {
