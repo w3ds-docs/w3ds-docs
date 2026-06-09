@@ -1,6 +1,6 @@
 ---
 title: Data Architecture
-weight: 40
+weight: 10
 ---
 
 # Data Architecture
@@ -36,8 +36,8 @@ Out of scope:
 
 - Identity (its own chapter).
 - Access control: grants, revocation, the grain at which access is evaluated, and sensitive-field protection (its own chapter).
-- Concrete components ([Components](../components)).
-- The wire surface developers code against ([API](../api)).
+- Concrete components ([Components](../../components)).
+- The wire surface developers code against ([API](../../api)).
 
 ---
 
