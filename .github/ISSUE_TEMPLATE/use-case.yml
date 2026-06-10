@@ -1,0 +1,83 @@
+name: Use Case
+description: Describe a use case for the W3DS Product to help us understand real-world needs
+title: "[Use Case]: "
+labels: ["use-case"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Understanding how the W3DS Product is used in practice helps us prioritize and build the right things.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Use Case Summary
+      description: A brief description of the use case.
+      placeholder: "As a [role], I want to [action] so that [outcome]..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actors
+    attributes:
+      label: Actors
+      description: Who are the users or systems involved in this use case?
+      placeholder: "e.g. End user, API consumer, admin, external service, post platform..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: preconditions
+    attributes:
+      label: Preconditions
+      description: What must be true before this use case can begin?
+      placeholder: "e.g. User is authenticated, data has been registered..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: flow
+    attributes:
+      label: Flow / Steps
+      description: Describe the main sequence of actions or interactions.
+      placeholder: |
+        1. User initiates...
+        2. System responds with...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-outcome
+    attributes:
+      label: Expected Outcome
+      description: What is the desired end state or result?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternative-flows
+    attributes:
+      label: Alternative / Exception Flows
+      description: Describe any alternative paths or error scenarios.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How critical is this use case?
+      options:
+        - Nice to have
+        - Important
+        - Critical
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context, diagrams, references, or examples that help explain this use case.
+    validations:
+      required: false

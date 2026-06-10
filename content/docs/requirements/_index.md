@@ -1,7 +1,6 @@
 ---
 title: Requirements
-weight: 1
-bookCollapseSection: false
+weight: 30
 ---
 
 # Requirements
