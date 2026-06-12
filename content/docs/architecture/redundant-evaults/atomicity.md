@@ -16,3 +16,43 @@ it sits directly on top of the [Write-Ahead Log](durability).
 > or none of them do, even if the power goes out halfway through. You never
 > see a half-saved state, and nothing you were told was saved can later turn
 > out to have only partly happened.
+
+## A transaction is a batch of log entries
+
+A single client request can produce more than one change. Updating a
+MetaEnvelope, for example, can touch several Envelopes underneath it. All of
+those changes belong together. The eVault groups them into one **transaction**
+by bracketing them in the log:
+
+- A `BEGIN` marker opens the transaction.
+- One or more change entries follow, in the order the primary made them.
+- A signed `COMMIT` marker closes the transaction. The commit marker carries
+  the hash of the last entry in the batch, so it nails the batch to a specific
+  shape.
+
+This is the same trick [PostgreSQL](https://www.postgresql.org/docs/current/wal-intro.html)
+uses with its commit records, and the same idea Raft and similar log-replication
+protocols use to mark the **commit index**: a position in the log past which
+everything is final.
+
+```mermaid
+sequenceDiagram
+    participant Client as Client
+    participant Ingress as Ingress
+    participant Primary as Primary eVault
+
+    Client->>Ingress: Save these changes (one transaction)
+    Ingress->>Primary: Save these changes
+    Primary->>Primary: 1. Append BEGIN
+    Primary->>Primary: 2. Append each change entry
+    Primary->>Primary: 3. Append signed COMMIT
+    Primary->>Primary: 4. Make COMMIT durable on disk
+    Primary-->>Ingress: 5. Saved
+    Ingress-->>Client: Saved
+```
+
+The acknowledgement at step 5 only goes out **after** step 4. Until the
+`COMMIT` entry is durable, the transaction has no effect: readers ignore
+anything past the last durable commit, and a replica will not expose changes
+from a transaction whose commit marker has not yet arrived. This is the lever
+that makes a multi-entry change behave as one atomic unit.
