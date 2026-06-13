@@ -96,7 +96,9 @@ primary's log.
 It handles this by **rewinding** that divergent tail and then catching up from
 the new primary, the same idea PostgreSQL calls `pg_rewind`. The hash-chain in
 the log makes the exact point where the two logs diverge easy to find: it is the
-first entry whose fingerprints stop matching.
+first entry whose fingerprints stop matching. Any partial transaction on the
+discarded tail is dropped wholesale, so [atomicity](atomicity) holds across the
+failover too.
 
 ```mermaid
 flowchart LR

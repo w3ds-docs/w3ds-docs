@@ -56,3 +56,33 @@ The acknowledgement at step 5 only goes out **after** step 4. Until the
 anything past the last durable commit, and a replica will not expose changes
 from a transaction whose commit marker has not yet arrived. This is the lever
 that makes a multi-entry change behave as one atomic unit.
+
+## Crash recovery rolls back partial transactions
+
+When the primary restarts after a crash, it does the same checkpoint-and-replay
+walk described in [durability](durability/#recovery-after-a-crash), with one
+extra rule: any transaction whose `BEGIN` is present but whose `COMMIT` is
+**not** is thrown away. Half-written transactions are not "almost saved", they
+are not saved at all.
+
+```mermaid
+flowchart LR
+    Scan["Scan from last<br/>checkpoint to end of log"]
+    Find["Find any open<br/>BEGIN without COMMIT"]
+    Drop["Drop the partial<br/>transaction"]
+    Done["Log is now a clean<br/>sequence of committed<br/>transactions"]
+
+    Scan --> Find --> Drop --> Done
+```
+
+Because the acknowledgement only ever followed a durable `COMMIT`, nothing the
+client was told was saved can be in the discarded tail. The rule is symmetric:
+saved means committed, committed means durable, durable means a `COMMIT` entry
+made it to disk. Anything that does not clear all three is rolled back on
+restart.
+
+The same rule applies during a [failover](failover) when an old primary
+[rejoins](failover/#the-old-primary-rejoins) the replica set: any partial
+transaction on its divergent tail is dropped wholesale during the rewind. It
+does not matter that some change entries from that transaction survived — the
+batch is incomplete, so the whole batch is gone.
