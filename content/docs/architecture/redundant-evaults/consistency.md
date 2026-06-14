@@ -39,3 +39,37 @@ together makes it clear what "valid state" means.
 - **An eName resolves to exactly one ingress.** This is the Registry's
   invariant, but the eVault relies on it — see the
   [overview](./#the-registry-stays-dumb).
+
+## Invariants are checked at apply time, on every replica
+
+Every replica runs the same gate over every log entry before it touches its
+stored data:
+
+```mermaid
+flowchart LR
+    Entry["Incoming<br/>log entry"]
+    Sig["Signature<br/>check"]
+    Chain["Previous-hash<br/>check"]
+    Inv["Invariant<br/>checks"]
+    Apply["Apply"]
+    Refuse["Refuse +<br/>raise alarm"]
+
+    Entry --> Sig --> Chain --> Inv --> Apply
+    Sig -. fails .-> Refuse
+    Chain -. fails .-> Refuse
+    Inv -. fails .-> Refuse
+```
+
+The signature and chain checks are already in
+[redundancy](redundancy/#replicas-check-every-entry-before-applying-it). The
+invariant checks slot into the same gate — they are cheap, they run on the
+same code path, and they refuse entries the same way. A replica never lets
+itself drift into an invalid state, because the gate is the only way data
+gets into the store.
+
+If a replica refuses an entry, it stops applying further entries from that
+primary and signals the failure. The primary should never have produced an
+invalid entry in the first place (it ran the same checks on its way in), so a
+refusal is treated as evidence that something is wrong — corruption in
+transit, a bug, or a misbehaving provider — and is escalated rather than
+papered over.
