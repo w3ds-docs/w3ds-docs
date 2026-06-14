@@ -73,3 +73,25 @@ invalid entry in the first place (it ran the same checks on its way in), so a
 refusal is treated as evidence that something is wrong — corruption in
 transit, a bug, or a misbehaving provider — and is escalated rather than
 papered over.
+
+## Same log, same order, same state
+
+The log is a **total order** of operations, and every replica applies entries
+in that order through the same gate. Apply the same operations in the same
+order to the same starting point and you get the same final state. This is
+how systems like [Spanner](https://research.google/pubs/pub39966/) and
+CockroachDB stay consistent across many machines: they treat each replica as
+a state machine whose only input is the log.
+
+> **In plain terms**
+>
+> If three friends each follow the same recipe in the same order starting
+> from the same ingredients, they end up with the same dish. The eVault's log
+> is the recipe, the replicas are the friends, and the checks make sure
+> nobody can sneak in an ingredient the recipe never asked for.
+
+The practical payoff is that **consistency does not need a separate
+agreement protocol between replicas**. As long as a replica's log is valid
+and reaches a given point, its state at that point is exactly what every
+other replica reaches at the same point. The hash chain and the invariant
+checks together carry the proof.
