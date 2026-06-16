@@ -92,8 +92,8 @@ If either check fails, the replica refuses the entry and raises the alarm rather
 than corrupting its copy. This is the same tamper-evidence described on the
 [durability page](durability/#making-the-log-trustworthy-across-independent-providers),
 now doing its job during replication. The same gate also runs the eVault's
-[consistency invariants](consistency/#invariants-are-checked-at-apply-time-on-every-replica)
-over the entry, so a replica never lets itself drift into an invalid state.
+[consistency invariants](/docs/architecture/consistency/validation) over the
+entry, so a replica never lets itself drift into an invalid state.
 
 ## Reads and replication lag
 
