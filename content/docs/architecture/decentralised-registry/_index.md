@@ -61,38 +61,46 @@ the following.
 - **Persistent resolution.** A W3ID is a long-lived identifier, designed to
   stay stable for the lifetime of the entity and across key rotation and
   eVault migration (W3ID Sections 4 and 7).
-- **Federated peers, no central root.** Registries must operate as peers, with
-  no mandatory central root registry (`NFR10`), and a new or low-reputation
-  registry must not be able to override established records by assertion alone
-  (`NFR11`).
+- **Federated peers, no central root.** Registries operate as peers, with no
+  mandatory central root (`NFR10`). A new or low-reputation registry cannot
+  make an established record change just by claiming the change is correct.
+  Peers only accept an update when the record's own signed chain (transfer
+  signatures, witnessed timestamps, version monotonicity) proves it (`NFR11`).
 - **Eventual consistency.** Registries must assume
   [eventual consistency](https://en.wikipedia.org/wiki/Eventual_consistency)
-  and tolerate temporarily incomplete knowledge of their peers (`NFR4`,
-  `NFR5`).
+  and tolerate temporarily incomplete knowledge of their peers, and of the
+  world in general (`NFR4`, `NFR5`).
 - **Conflicts detected, never hidden.** Duplicate or contradictory records are
   expected. A registry must detect them and must not silently overwrite or
-  silently resolve them (`FR9`, `FR21`, `FR23`).
-- **Auditable history.** Every registry must keep an append-only, tamper
-  evident record of how each entry reached its current state (`FR37`, `FR38`).
+  silently resolve them (`FR9`, `FR21`, `FR23`). See
+  [Gossip protocol, Example D](gossip-protocol/#example-d-a-conflict-and-how-it-is-resolved)
+  for the resolution procedure.
+- **Auditable history.** Two layers of audit coexist. The *content* audit, what
+  the resolution record actually says, is owned by the user's
+  [eVault](/docs/Infrastructure/eVault): a registry can link the current record
+  back to the eVault MetaEnvelope it was sourced from. The *operational* audit,
+  how each registry came to know what it knows (which peer gossiped it, which
+  witness signed it, which conflict was raised), is kept by each registry as
+  an append-only tamper-evident log on its own `/logs` (`FR37`, `FR38`).
 
 ## The headline idea
 
 Each registry is itself an [eVault](/docs/Infrastructure/eVault). Registries
-talk to each other by writing gossip messages into each other's eVaults, and
-those messages are delivered by the existing
-[Awareness Protocol](/docs/W3DS%20Protocol/Awareness-Protocol). Almost no new
-machinery is introduced: storage, audit, and peer delivery are all primitives
-W3DS already has.
+write gossip messages into their own eVaults; the existing
+[Awareness Protocol](/docs/W3DS%20Protocol/Awareness-Protocol) then delivers a
+webhook notification of each write to every subscribed peer registry. Almost
+no new machinery is introduced: storage, audit, and peer delivery are all
+primitives W3DS already has.
 
 > **In plain terms**
 >
-> An eVault is a small data store that already knows how to keep signed
-> records, list every change it ever made, and notify subscribers when
-> something changes. A registry is just an eVault with a particular job:
-> instead of storing one user's posts and contacts, it stores the resolution
-> records for many users. Other registries subscribe to its notifications, so
-> a change made on one registry shows up on the others within seconds. There
-> is no master copy, no special transport, no new protocol.
+> An eVault is a data store that already knows how to keep signed records,
+> list every change it ever made, and notify subscribers when something
+> changes. A registry is one of these eVaults with a particular job: instead
+> of storing one user's posts and contacts, it stores the resolution records
+> for many eNames. Other registries subscribe to its notifications, so a
+> change made on one registry shows up on the others within seconds. There is
+> no master copy, no special transport, no new protocol.
 
 The one wrinkle is that a registry's own eVault **has no eName**. The reason
 is circular: the registry is what dereferences eNames, so the registry's own
@@ -105,9 +113,9 @@ find a registry by a published seed URL rather than by resolution.
 ```mermaid
 graph TB
     subgraph Clients["Clients"]
-        EVault[eVault Core]
+        EVault[User eVault]
         Platform[Platforms]
-        Wallet[eID Wallet]
+        Wallet["eID Wallet<br/>(samples eName UUID only)"]
     end
 
     subgraph Federation["Federated registries (each is an eVault, no central root)"]
@@ -123,14 +131,51 @@ graph TB
         W[Independent witnesses<br/>quorum, e.g. 7 of 10]
     end
 
-    Wallet -->|register / update / transfer| R1
-    Wallet -->|creation timestamp request| W
-    W -->|witness attestations| Wallet
+    Wallet -.->|hands sampled UUID| EVault
+    EVault -->|register / update / transfer| R1
+    EVault -->|creation timestamp request| W
+    W -->|witness attestations| EVault
     EVault -->|resolve eName| R2
     Platform -->|resolve eName| R3
 ```
 
 Continue to [Architecture](architecture).
+
+## Promoting a local W3ID into an eName
+
+The [Identifiers](/docs/architecture/identifiers/anatomy) section draws the
+distinction the rest of this proposal relies on: a **W3ID** is the bare UUID
+identifier and may be local to a single eVault, while an **eName** is a W3ID
+that has been registered for global resolution. Local W3IDs are not
+registered, so they cannot be resolved by anyone outside the owning eVault.
+Sometimes a local identifier needs to become globally resolvable, for example
+when a private object inside an eVault (a document, a digital twin, a group)
+needs an address the wider system can reach.
+
+> **In plain terms**
+>
+> Something that started life as a private label inside one eVault becomes a
+> public address. The label keeps its same characters; what changes is that
+> a registry now answers when someone asks for it, and the answer points
+> straight at the specific resource inside the eVault, not at the eVault as
+> a whole.
+
+Promotion is a normal registration with two extra details:
+
+- The owning eVault writes a new `ENameRecord` whose
+  `creationRecord.promotedFrom` carries the original local W3ID. That field
+  is the audit trail tying the new eName back to what it used to be.
+- The record's `uri` field points at the resource's path inside the eVault
+  (for example `https://evault.example.com/users/alice/objects/twin-42`),
+  not at the eVault root. Resolution therefore returns the URI of the
+  resource itself, satisfying clients that want to reach the specific
+  object the eName now stands for.
+
+Everything else (witnessed timestamps, signed creation record, federation
+gossip) is identical to a first-time eName registration. The original local
+W3ID continues to exist inside the eVault for backwards compatibility; the
+new eName is the canonical globally-resolvable identifier from the moment
+the record lands.
 
 ## References
 

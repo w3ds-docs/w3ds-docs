@@ -111,11 +111,11 @@ consistency is the model, as the requirements expect (`NFR4`).
 
 ```mermaid
 sequenceDiagram
-    participant Wallet as eID Wallet
+    participant EV as User eVault
     participant RA as Registry A (eVault)
     participant RB as Registry B (eVault)
     participant RC as Registry C (eVault)
-    Wallet->>RA: register ENameRecord MetaEnvelope
+    EV->>RA: register ENameRecord MetaEnvelope
     RA->>RA: Verify proof, witness quorum, duplicate check
     RA->>RA: Store + /logs entry
     Note over RA: Awareness Protocol fires
@@ -230,10 +230,33 @@ A new registry starts up with a few seed URLs from
 [Links](/docs/W3DS%20Basics/Links). It contacts each, asks for the seed
 registry's `PeerRegistry` MetaEnvelopes, validates them, stores its own
 `PeerRegistry` records for each peer it learns, and subscribes to those
-peers' Awareness Protocols. It then runs an anti-entropy catch-up by paging
-through each peer's `ENameRecord` MetaEnvelopes and importing anything it is
-missing. After that it participates in
-ongoing gossip the same way as everyone else.
+peers' Awareness Protocols.
+
+Paging the entire history of `ENameRecord` MetaEnvelopes through ordinary
+W3DS reads is the wrong tool for a cold start: a healthy federation has
+millions of eNames, and the per-record protocol overhead is huge. Bootstrap
+therefore uses a one-shot snapshot:
+
+1. The new registry calls `GET /registry/snapshot` on each peer. The peer
+   returns a single signed bundle containing the current state of every
+   `ENameRecord` it holds, plus a `cursor` (an opaque token marking the
+   `/logs` position at which the snapshot was minted).
+2. The new registry verifies the bundle's signature against the peer
+   registry's published key, validates every record's own signed chain, and
+   imports them in bulk.
+3. From the snapshot's `cursor`, the new registry runs incremental
+   anti-entropy by paging through `ENameRecord` changes the peer has
+   recorded since the snapshot was minted. This is small and bounded: it
+   only covers the delta, not the whole world.
+4. After the delta is drained, the new registry is in sync, and any further
+   changes arrive through ordinary Awareness Protocol gossip.
+
+The snapshot endpoint is the heavy-lift path used once per new registry per
+peer; the MetaEnvelope page-through is the incremental catch-up that keeps
+the new registry honest about anything that changed between snapshot mint
+time and full subscription. Once steady state is reached, neither path is
+needed and the new registry participates in ongoing gossip the same way as
+everyone else.
 
 ## Security and failure modes
 

@@ -22,8 +22,8 @@ notifications.
 
 > **In plain terms**
 >
-> An eVault is a small data store that knows how to keep signed records, list
-> every change it ever made, and notify subscribers when something changes. A
+> An eVault is a data store that knows how to keep signed records, list every
+> change it ever made, and notify subscribers when something changes. A
 > registry is one of these eVaults, configured to store one specific kind of
 > record (eName resolution records) and to talk to other registries instead of
 > to user-facing platforms. By starting from a primitive that already exists,
@@ -42,16 +42,26 @@ The three differences from a user eVault:
   [Links](/docs/W3DS%20Basics/Links). From those it learns the rest of the
   federation through ordinary peer exchange (see
   [Gossip protocol](../gossip-protocol)).
-- **Public read.** eName resolution records use ACL `["*"]`, so any client can
-  resolve any eName from any registry. Writes are still owner authorised by
-  the record's signature chain, not by a registry-level write permission.
+- **Public read, ACL-gated writes.** eName resolution records use a read ACL
+  of `["*"]`, so any client can resolve any eName from any registry. The
+  MetaEnvelope's *write* ACL contains the controller's eName, so the
+  controller can self-service updates through the same auth flow user eVaults
+  already use. The registry independently re-verifies the record's signed
+  update chain (`controlKey` rotation, version monotonicity, immutable
+  fields) before persisting the write.
 
 ## eName records as MetaEnvelopes
 
 An eName record is a MetaEnvelope stored in the registry's eVault under a new
 **`ENameRecord`** ontology schema. The schema is published the same way every
 other W3DS schema is, through the [Ontology](/docs/Infrastructure/Ontology)
-service, and gets a `schemaId` W3ID.
+service, and gets a `schemaId` W3ID. Every record the registry holds is an
+**eName** by definition. Local W3IDs (no `@` prefix) live only inside the
+owning eVault and are never resolved by the registry; the
+[Identifiers anatomy](/docs/architecture/identifiers/anatomy) page is the
+canonical reference for the terminology. Promotion of a local W3ID into an
+eName is described in the
+[Overview](_index/#promoting-a-local-w3id-into-an-ename).
 
 ```json
 {
@@ -60,8 +70,7 @@ service, and gets a `schemaId` W3ID.
   "title": "ENameRecord",
   "type": "object",
   "properties": {
-    "ename":            { "type": "string", "description": "Global W3ID" },
-    "class":            { "type": "string", "enum": ["global", "local"] },
+    "ename":            { "type": "string", "description": "Registered eName (global W3ID)" },
     "controller":       { "type": "string", "description": "Controller eName" },
     "evault":           { "type": "string", "description": "Current eVault W3ID" },
     "uri":              { "type": "string", "format": "uri" },
@@ -73,7 +82,7 @@ service, and gets a `schemaId` W3ID.
     "updatedAt":        { "type": "integer" },
     "proof":            { "type": "object" }
   },
-  "required": ["ename", "class", "controller", "evault", "uri", "version", "creationRecord", "controlKey", "updatedAt", "proof"],
+  "required": ["ename", "controller", "evault", "uri", "version", "creationRecord", "controlKey", "updatedAt", "proof"],
   "additionalProperties": false
 }
 ```
@@ -83,7 +92,6 @@ A concrete record:
 ```json
 {
   "ename": "@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a",
-  "class": "global",
   "controller": "@e4d909c2-5d2f-4a7d-9473-b34b6c0f1a5a",
   "evault": "@b1c2d3e4-7f80-4a11-9c22-d3e4f5061728",
   "uri": "https://evault.example.com/users/user-a",
@@ -91,6 +99,7 @@ A concrete record:
   "creationRecord": {
     "creationTimestamp": 1737730800,
     "genesisKey": "zGenesisPublicKey...",
+    "promotedFrom": null,
     "timestampProof": {
       "policy": "7-of-10",
       "witnesses": [
@@ -112,16 +121,22 @@ A concrete record:
 }
 ```
 
+By convention the `ENameRecord` MetaEnvelope's ID is the eName itself, so
+resolution and storage share a single primary key.
+
 What the fields mean:
 
-- `ename`, `class`, `controller`, `evault`, `uri`: the resolution result. The
+- `ename`, `controller`, `evault`, `uri`: the resolution result. The
   `controller` eName identifies the person, group, or device, and is kept
   distinct from the `evault` W3ID, which identifies one eVault instance (W3ID
-  Section 6). `class` is `global` or `local` (W3ID Section 3).
+  Section 6). The `uri` is the address resolution returns and may point at
+  the eVault root or, for a promoted local W3ID, at the specific resource
+  inside the eVault.
 - `creationRecord`: the genesis of the eName. Written once and **never
-  overwritten** (`FR30`). Carries the `creationTimestamp`, a `genesisKey`, and
-  a `timestampProof` from a quorum of independent witnesses (W3ID Section 9,
-  `FR16` to `FR19`).
+  overwritten** (`FR30`). Carries the `creationTimestamp`, a `genesisKey`, an
+  optional `promotedFrom` field (set to the original local W3ID when this
+  eName was minted by promotion, otherwise `null`), and a `timestampProof`
+  from a quorum of independent witnesses (W3ID Section 9, `FR16` to `FR19`).
 - `transferChain`: an ordered list of signed transfer records, empty until the
   eName first moves eVault (W3ID Section 10, `FR26` to `FR31`).
 - `controlKey`: the key currently allowed to authorise updates to this record.
@@ -135,7 +150,30 @@ What the fields mean:
   `controlKey`.
 
 Updates and key rotation are ordinary version-bumped MetaEnvelope updates.
-The eName is never changed by either (W3ID Section 5).
+The eName is never changed by either (W3ID Section 5). Rotation is itself a
+signed update: the new `controlKey` is set by an update whose `proof` is
+signed by the *previous* `controlKey`, so the rotation chain is verifiable
+end-to-end.
+
+### Field-level invariants on writes
+
+Some fields are locked or monotonic regardless of who signs the update; the
+registry enforces these at write time, not via the ACL. An update violating
+any of them is rejected even when its signature verifies.
+
+- `ename` is immutable. An update that attempts to change it is rejected.
+- `creationRecord` (and every field inside it, including `creationTimestamp`,
+  `genesisKey`, `promotedFrom`, and `timestampProof`) is immutable.
+- `version` must equal current `version` + 1. Older or skipped versions are
+  rejected.
+- `proof` must verify against the previous version's `controlKey`. A
+  rotation update binds the new key by being signed under the old one.
+- `controller` may change only through a `transferChain` entry whose
+  signatures and authorisation evidence verify against the current
+  `controlKey` (`FR26` to `FR31`).
+
+The write ACL governs *who is allowed to attempt* a write; these invariants
+govern *what the write is allowed to contain*. Both checks have to pass.
 
 ## Audit history through the eVault `/logs`
 
@@ -143,6 +181,11 @@ The eVault already exposes a paginated, append-only log of every envelope
 operation (create, update, delete) with `eName`, `metaEnvelopeId`,
 `envelopeHash`, `operation`, `platform`, `timestamp`, and `ontology` per entry.
 See the [eVault `/logs` documentation](/docs/Infrastructure/eVault#logs).
+
+Public exposure of `/logs` is specific to the registry eVault, whose contents
+are public by design. User eVaults are not assumed to expose their `/logs` to
+the world; the requirement here applies only to registries, where every
+record is already public.
 
 Mapping that log directly satisfies the registry audit requirements:
 
@@ -211,11 +254,15 @@ graph TB
     RC -.->|gossip back| AA
 ```
 
-## Example A: registering an eName
+## Example A: registering an eName (push)
 
-The eID Wallet collects witness timestamps, builds the v2 record, and submits
-it to a registry as a new MetaEnvelope under the `ENameRecord` ontology, with
-public ACL `["*"]`. The registry:
+The eID Wallet samples the eName UUID at creation time and hands it to the
+owning eVault (see the
+[Identifiers lifecycle Step 2](/docs/architecture/identifiers/lifecycle)).
+From there the eVault collects witness timestamps, builds the v2 record,
+and submits it to a registry as a new MetaEnvelope under the `ENameRecord`
+ontology, with read ACL `["*"]` and write ACL containing the controller
+eName. The registry:
 
 1. Validates the record against the `ENameRecord` schema.
 2. Checks the witness quorum on `creationRecord.timestampProof` and the
@@ -228,10 +275,36 @@ public ACL `["*"]`. The registry:
    is the subject of the next page).
 6. The store operation also lands in the eVault `/logs`, giving the audit
    history for free.
+7. Subscribes itself to the source eVault's Awareness Protocol, so any
+   subsequent change to the eName record reaches the registry by pull
+   without another direct write (see Example A').
 
 The exact request shape is whatever the production eVault read/write API
 turns out to be; what matters here is the conceptual call: "create an
 `ENameRecord` MetaEnvelope with this payload."
+
+## Example A': following changes by pull
+
+After the initial push, the source eVault becomes the source of truth for
+the record's content. The owning eVault keeps its own copy of the eName
+record (URI, controlKey, transfer chain) and publishes updates to it the
+same way it publishes any other MetaEnvelope change. Because the registry
+subscribed to that eVault in step 7 of Example A, every subsequent change
+flows by pull:
+
+1. The user's eVault writes the updated record (URI change, key rotation,
+   transfer) into its own MetaEnvelope store.
+2. The eVault's [Awareness Protocol](/docs/W3DS%20Protocol/Awareness-Protocol)
+   fires a webhook to every subscribed registry.
+3. Each registry validates the signed update chain (`controlKey` rotation,
+   version monotonicity, immutable fields, transfer signatures).
+4. The registry applies the change to its own `ENameRecord` MetaEnvelope,
+   which lands in its `/logs` for free.
+5. The registry's own Awareness Protocol then gossips the change onward to
+   peer registries (the next page).
+
+Initial creation stays a push because the registry has no eVault to
+subscribe to yet at that point. Everything afterwards is pull.
 
 ## Example B: resolving an eName
 
