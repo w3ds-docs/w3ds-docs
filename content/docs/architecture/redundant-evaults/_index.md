@@ -20,23 +20,23 @@ providers, that hold the same data and cover for each other.
 > outage, the other two keep working, and the system quietly picks a new leader
 > without you noticing.
 
-## The goals
+## The three goals
 
 - **Durable**: once the system tells you a change is saved, that change is not
   lost, even if a machine crashes a second later. This is the job of the
   [Write-Ahead Log](durability).
-- **Atomic**: a change is all-or-nothing — a multi-part save either lands
-  whole or not at all, even across a crash. This is the job of
-  [atomicity](atomicity).
 - **Redundant**: the same data lives on three independent eVaults at once, so
   losing one changes nothing for the user. This is the job of
   [replication](redundancy).
-- **Consistent**: every replica only ever moves through valid states, in the
-  same order, so all three agree on what is in the store. This is the job of
-  [consistency](consistency).
 - **Self-healing**: if the leader fails, the survivors promote a new leader
   automatically and the old one rejoins later. This is the job of
   [failover](failover).
+
+Two further ACID properties — atomicity and consistency — share the same
+log machinery but are large enough to deserve sections of their own:
+[Atomicity](/docs/architecture/atomicity) and
+[Consistency](/docs/architecture/consistency). Read those alongside this
+one to get the full picture.
 
 ## The shape of the system
 
@@ -101,7 +101,6 @@ has its own distinct eVault W3ID underneath.
 > the eName to ingress mapping is stable, so the Registry never has to change
 > during a failure.
 
-The next five pages cover each goal in turn:
-[durability](durability), [atomicity](atomicity),
-[redundancy](redundancy), [consistency](consistency), and
+The next three pages cover each goal in turn:
+[durability](durability), [redundancy](redundancy), and
 [failover](failover).

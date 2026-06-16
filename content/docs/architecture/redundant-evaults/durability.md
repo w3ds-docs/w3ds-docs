@@ -44,7 +44,7 @@ trick: the moment you are told "saved", the change is already safely recorded,
 even if the eVault crashes before step 3 finishes. On restart it replays the
 log and completes any half-applied change. When a single client request
 produces several entries at once, the acknowledgement waits for the
-transaction's [commit marker](atomicity/#a-transaction-is-a-batch-of-log-entries),
+transaction's [commit marker](/docs/architecture/atomicity/transactions),
 so the same rule still holds.
 
 ## This builds on what the eVault already has
